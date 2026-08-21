@@ -70,7 +70,7 @@ async function carregarLista() {
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/perguntas?select=id,pergunta&order=id.desc&limit=20`,
+      `${SUPABASE_URL}/rest/v1/perguntas?select=id,pergunta,created_at&order=id.desc&limit=20`,
       {
         headers: {
           apikey: SUPABASE_ANON_KEY,
@@ -86,7 +86,6 @@ async function carregarLista() {
 
     if (perguntas.length === 0) {
       const vazio = document.createElement("p");
-      vazio.className = "vazio";
       vazio.textContent = "Nenhuma pergunta enviada ainda.";
       lista.appendChild(vazio);
       return;
@@ -96,7 +95,19 @@ async function carregarLista() {
       const item = document.createElement("details");
 
       const summary = document.createElement("summary");
-      summary.textContent = `Pergunta #${p.id}`;
+
+      const titulo = document.createElement("span");
+      titulo.textContent = `#${p.id}`;
+
+      const time = document.createElement("time");
+      time.dateTime = p.created_at;
+      time.textContent = new Date(p.created_at).toLocaleString("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+
+      summary.appendChild(titulo);
+      summary.appendChild(time);
 
       const texto = document.createElement("p");
       texto.textContent = p.pergunta;
