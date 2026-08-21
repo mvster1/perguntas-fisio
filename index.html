@@ -3,48 +3,194 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nova Pergunta</title>
+<title>Perguntas de Fisioterapia</title>
 <style>
   * { box-sizing: border-box; }
+
   body {
     font-family: system-ui, sans-serif;
-    max-width: 40rem;
-    margin: 4rem auto;
+    max-width: 64rem;
+    margin: 3rem auto;
     padding: 0 1rem;
-    color: #111;
+    color: #1a1a1a;
+    background: #fafafa;
   }
-  h1 { font-size: 1.2rem; margin-bottom: 1.5rem; }
+
+  h1 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1rem;
+    margin: 0 0 1rem;
+    color: #333;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 42rem) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  section {
+    background: #fff;
+    border: 1px solid #e2e2e2;
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+
   textarea {
     width: 100%;
-    min-height: 8rem;
-    padding: 0.6rem;
+    min-height: 9rem;
+    padding: 0.7rem;
     font: inherit;
     resize: vertical;
+    border: 1px solid #ccc;
+    border-radius: 6px;
   }
-  input {
+
+  button {
+    margin-top: 0.8rem;
+    padding: 0.55rem 1.3rem;
+    font: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background: #1a1a1a;
+    color: #fff;
+  }
+
+  button:hover { background: #333; }
+
+  #status { margin-top: 0.8rem; font-size: 0.9rem; }
+
+  #lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-height: 32rem;
+    overflow-y: auto;
+  }
+
+  #lista p.vazio { color: #888; font-size: 0.9rem; }
+
+  details {
+    border: 1px solid #e2e2e2;
+    border-radius: 6px;
+    padding: 0.5rem 0.7rem;
+  }
+
+  details summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #333;
+    list-style: none;
+  }
+
+  details summary::-webkit-details-marker { display: none; }
+
+  details summary::before {
+    content: "+ ";
+    color: #888;
+  }
+
+  details[open] summary::before {
+    content: "- ";
+  }
+
+  details p {
+    margin: 0.6rem 0 0;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+  }
+
+  dialog {
+    border: none;
+    border-radius: 10px;
+    padding: 1.5rem;
+    max-width: 22rem;
+    width: 90%;
+  }
+
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  dialog p {
+    margin: 0 0 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  dialog input {
     width: 100%;
     padding: 0.6rem;
     font: inherit;
-    margin-top: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
   }
-  button {
-    margin-top: 0.8rem;
-    padding: 0.5rem 1.2rem;
-    font: inherit;
-    cursor: pointer;
+
+  dialog .acoes {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
   }
-  #status { margin-top: 0.8rem; font-size: 0.9rem; }
+
+  dialog .acoes button {
+    margin-top: 0;
+  }
+
+  dialog .acoes #senha-cancelar {
+    background: transparent;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+
+  dialog #erro-senha {
+    color: #b00020;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    min-height: 1.1em;
+  }
 </style>
 </head>
 <body>
-  <h1>Enviar pergunta de fisioterapia</h1>
-  <form id="form">
-    <textarea id="pergunta" placeholder="Digite o enunciado da pergunta..." required></textarea>
-    <input id="senha" type="password" placeholder="Senha" required>
-    <br>
-    <button type="submit">Enviar</button>
-    <p id="status"></p>
-  </form>
+  <h1>Perguntas de fisioterapia</h1>
+  <main>
+    <section>
+      <h2>Enviar nova pergunta</h2>
+      <form id="form">
+        <textarea id="pergunta" placeholder="Digite o enunciado da pergunta..." required></textarea>
+        <br>
+        <button type="submit">Enviar</button>
+        <p id="status"></p>
+      </form>
+    </section>
+
+    <section>
+      <h2>Perguntas recentes</h2>
+      <div id="lista"></div>
+    </section>
+  </main>
+
+  <dialog id="senha-dialog">
+    <form id="senha-form">
+      <p>Digite a senha para enviar a pergunta:</p>
+      <input id="senha-input" type="password" autocomplete="off" required>
+      <p id="erro-senha"></p>
+      <div class="acoes">
+        <button type="button" id="senha-cancelar">Cancelar</button>
+        <button type="submit" id="senha-confirmar">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
