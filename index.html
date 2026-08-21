@@ -54,7 +54,14 @@
     justify-content: space-between;
     gap: 1rem;
     font-size: 0.9rem;
+    list-style: none;
   }
+
+  details summary::-webkit-details-marker { display: none; }
+
+  details summary span::before { content: "[+] "; }
+
+  details[open] summary span::before { content: "[-] "; }
 
   details time {
     color: #666;
