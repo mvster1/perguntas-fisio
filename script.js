@@ -115,19 +115,68 @@ async function rpc(nome, params) {
   return res.status === 204 ? null : res.json();
 }
 
+function acaoDoResumo(texto, classe, aoClicar) {
+  const alvo = document.createElement("span");
+  alvo.className = classe;
+  alvo.textContent = texto;
+  alvo.addEventListener("click", (e) => {
+    // sem isto o clique tambem abriria/fecharia o <details>
+    e.preventDefault();
+    e.stopPropagation();
+    aoClicar();
+  });
+  return alvo;
+}
+
+function montarExcluir(caixa, p) {
+  caixa.textContent = "";
+  caixa.appendChild(acaoDoResumo("[Excluir]", "op", () => confirmarExclusao(caixa, p)));
+}
+
+function confirmarExclusao(caixa, p) {
+  caixa.textContent = "[";
+  caixa.appendChild(acaoDoResumo("Sim", "op sim", () => excluirPergunta(caixa, p)));
+  caixa.appendChild(document.createTextNode(" / "));
+  caixa.appendChild(acaoDoResumo("Não", "op nao", () => montarExcluir(caixa, p)));
+  caixa.appendChild(document.createTextNode("]"));
+}
+
+async function excluirPergunta(caixa, p) {
+  const tentativa = prompt(
+    `A pergunta #${p.id} será excluída definitivamente.\nDigite a senha para prosseguir:`
+  );
+
+  if (tentativa === null) {
+    montarExcluir(caixa, p);
+    return;
+  }
+
+  status.className = "";
+  status.textContent = "Excluindo...";
+
+  try {
+    await rpc("excluir_pergunta", { p_id: p.id, p_senha: tentativa });
+    if (editandoId === p.id) sairDaEdicao();
+    status.className = "ok";
+    status.textContent = "Pergunta excluída.";
+    renderLista(await rpc("listar_perguntas", { p_senha: senha }));
+  } catch (err) {
+    console.error(err);
+    montarExcluir(caixa, p);
+    status.className = "err";
+    status.textContent = "Erro ao excluir.";
+  }
+}
+
 function criarItem(p) {
   const item = document.createElement("details");
   const summary = document.createElement("summary");
 
-  const editar = document.createElement("span");
-  editar.className = "editar";
-  editar.textContent = "[Editar]";
-  editar.addEventListener("click", (e) => {
-    // sem isto o clique tambem abriria/fecharia o <details>
-    e.preventDefault();
-    e.stopPropagation();
-    iniciarEdicao(p);
-  });
+  const editar = acaoDoResumo("[Editar]", "editar", () => iniciarEdicao(p));
+
+  const excluir = document.createElement("span");
+  excluir.className = "excluir";
+  montarExcluir(excluir, p);
 
   const titulo = document.createElement("span");
   titulo.className = "titulo";
@@ -141,6 +190,7 @@ function criarItem(p) {
   });
 
   summary.appendChild(editar);
+  summary.appendChild(excluir);
   summary.appendChild(titulo);
   summary.appendChild(time);
 

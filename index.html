@@ -6,7 +6,7 @@
 <title>perguntas-fisio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 <script>
   document.documentElement.dataset.theme =
     localStorage.getItem("tema") ||
@@ -41,7 +41,7 @@
   html,body{
     background:var(--bg);
     color:var(--fg);
-    font-family:"Montserrat",system-ui,sans-serif;
+    font-family:"Inter",system-ui,sans-serif;
     font-size:14px;
     line-height:1.5;
   }
@@ -154,8 +154,13 @@
   details summary .titulo{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   details > summary::before{content:"[+]";color:var(--dim);}
   details[open] > summary::before{content:"[-]";color:var(--dim);}
-  .editar{color:var(--dim);cursor:pointer;flex:none;}
+  .editar, .excluir{color:var(--dim);flex:none;}
+  .editar{cursor:pointer;}
   .editar:hover{color:var(--acc2);text-decoration:underline;}
+  .excluir .op{cursor:pointer;}
+  .excluir .op:hover{text-decoration:underline;}
+  .excluir .op:hover, .excluir .sim{color:var(--err);}
+  .excluir .nao{color:var(--dim);}
   details summary:hover{text-decoration:underline;}
   details time{
     color:var(--dim);
@@ -200,7 +205,7 @@
 
 <div class="colunas">
   <section>
-    <h2>Nova Pergunta</h2>
+    <h2>Nova pergunta</h2>
     <form id="form">
       <select id="disciplina" required>
         <option value="" disabled selected>Selecione a disciplina...</option>
@@ -307,7 +312,7 @@
   </section>
 
   <section>
-    <h2>Últimas Perguntas</h2>
+    <h2>Últimas perguntas</h2>
     <div class="busca-box" id="busca-lista">
       <input id="busca-pergunta" type="text" placeholder="Buscar pergunta pelo enunciado..." autocomplete="off">
     </div>
