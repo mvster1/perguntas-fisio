@@ -79,7 +79,8 @@ tabela única, `perguntas`:
 | `alt_a` a `alt_d` | `text` | as quatro alternativas |
 | `disciplina` | `text` | nome exatamente como aparece na picklist |
 | `dificuldade` | `text` | `Baixa`, `Média` ou `Alta` |
-| `dica_bonus` | `text` | opcional; nula quando não preenchida |
+| `dica_bonus` | `text` | obrigatória; `not null` e `check` de texto não vazio |
+| `correta` | `text` | letra da alternativa correta: `a`, `b`, `c` ou `d` |
 | `created_at` | `timestamptz` | `default now()` |
 
 a tabela tem row level security ativa e nenhuma política de leitura, de modo que
@@ -88,7 +89,7 @@ o papel `anon` só alcança as linhas através das funções abaixo. todas são
 papel `anon`:
 
 - `checar_senha(p_senha)`: lê o segredo do vault e levanta exceção se não bater.
-- `enviar_pergunta(p_pergunta, p_senha, p_disciplina, p_resposta, p_alt_a, p_alt_b, p_alt_c, p_alt_d, p_dificuldade, p_dica_bonus)`:
+- `enviar_pergunta(p_pergunta, p_senha, p_disciplina, p_resposta, p_alt_a, p_alt_b, p_alt_c, p_alt_d, p_dificuldade, p_dica_bonus, p_correta)`:
   insere.
 - `atualizar_pergunta(p_id, ...)`: mesma lista de campos, precedida do `id`;
   sobrescreve a linha indicada e levanta exceção se o `id` não existir.
@@ -135,8 +136,8 @@ uma coluna de largura automática e empurrariam a lista para fora da tela.
 #### formulário
 
 os campos são preenchidos nesta ordem: enunciado, disciplina, as quatro
-alternativas, a dificuldade e a dica bônus. só a dica é opcional; sem os demais
-o envio para e o motivo aparece na linha de status.
+alternativas, a dificuldade e a dica bônus. todos são obrigatórios; faltando
+algum, o envio para e o motivo aparece na linha de status.
 
 a disciplina vem de um `<select>` com as 67 unidades curriculares de ensino do
 curso, agrupadas por semestre em `<optgroup>`; as unidades de extensão ficaram de
@@ -151,14 +152,17 @@ teclar enter, seleciona a opção no `<select>` acima. o enter também precisa d
 
 as quatro alternativas têm cada uma sua caixa e sua marcação. marcar uma
 desmarca as demais, de modo que a marcação funciona como escolha única mesmo
-sendo `checkbox`. no envio, o texto da alternativa marcada é copiado para a
-coluna `resposta`.
+sendo `checkbox`. no envio, a letra da marcada vai para a coluna `correta` e o
+texto dela é copiado para `resposta`. guardar a letra é o que permite destacar a
+alternativa certa mesmo quando duas delas têm exatamente o mesmo texto.
 
 a dificuldade é uma faixa de três opções, `Baixa`, `Média` e `Alta`, neutra até
 receber o clique; a escolhida ganha o fundo pastel correspondente.
 
-a dica bônus é o único campo opcional do formulário. em branco, chega ao banco
-como nulo, porque as funções de escrita aplicam `nullif(btrim(...), '')`.
+a dica bônus é obrigatória porque o jogo exibe a dica da pergunta seguinte a
+cada três acertos, e qualquer pergunta pode cair nessa posição. a regra também
+vale no banco: a coluna é `not null` e tem uma constraint que recusa texto
+vazio, de modo que uma chamada direta à api não consegue driblar o formulário.
 
 #### listagem
 
@@ -227,8 +231,5 @@ acompanha em tempo real a troca de tema do sistema.
   escrita passe por `enviar_pergunta`.
 - a listagem não é paginada no banco: `listar_perguntas` devolve a tabela
   inteira, e tanto a busca quanto a paginação operam no navegador.
-- não há coluna que guarde a letra da alternativa correta. ela é reconhecida
-  comparando o texto de cada alternativa com `resposta`, o que marcaria as duas
-  caso houvesse alternativas idênticas.
 - editar uma pergunta cuja disciplina saiu da picklist deixa o `<select>` vazio,
   e o campo é obrigatório: será preciso escolher outra para salvar.

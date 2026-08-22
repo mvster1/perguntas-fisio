@@ -324,8 +324,7 @@ function criarItem(p) {
       if (!alt) continue;
 
       const linha = document.createElement("p");
-      const certa = Boolean(p.resposta) && alt === p.resposta;
-      linha.className = certa ? "alt certa" : "alt";
+      linha.className = letra === p.correta ? "alt certa" : "alt";
       linha.textContent = `${letra}) ${alt}`;
       item.appendChild(linha);
     }
@@ -458,8 +457,7 @@ function iniciarEdicao(p) {
 
   for (const alt of alternativas) {
     alt.campo.value = p[`alt_${alt.letra}`] || "";
-    // sem coluna que guarde a letra, a correta é reconhecida pelo texto
-    alt.marca.checked = Boolean(p.resposta) && alt.campo.value === p.resposta;
+    alt.marca.checked = alt.letra === p.correta;
   }
   marcarDificuldade(p.dificuldade || null);
   dica.value = p.dica_bonus || "";
@@ -507,6 +505,10 @@ form.addEventListener("submit", async (e) => {
     mostrarStatus("Escolha a dificuldade.", "err");
     return;
   }
+  if (!dica.value.trim()) {
+    mostrarStatus("Escreva a dica bônus.", "err");
+    return;
+  }
 
   // a resposta é o próprio texto da alternativa marcada
   const resposta = correta.campo.value.trim();
@@ -529,6 +531,7 @@ form.addEventListener("submit", async (e) => {
         p_resposta: resposta,
         p_dificuldade: dificuldade,
         p_dica_bonus: dica.value.trim(),
+        p_correta: correta.letra,
         ...textos,
       });
     } else {
@@ -539,6 +542,7 @@ form.addEventListener("submit", async (e) => {
         p_resposta: resposta,
         p_dificuldade: dificuldade,
         p_dica_bonus: dica.value.trim(),
+        p_correta: correta.letra,
         ...textos,
       });
     }
