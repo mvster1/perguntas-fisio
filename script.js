@@ -15,6 +15,7 @@ const busca = document.getElementById("busca");
 const matches = document.getElementById("matches");
 const cancelar = document.getElementById("cancelar");
 const buscaPergunta = document.getElementById("busca-pergunta");
+const dica = document.getElementById("dica");
 const niveis = [...document.querySelectorAll("#dificuldade .nivel")];
 const paginacao = document.getElementById("paginacao");
 const paginaAnterior = document.getElementById("pagina-anterior");
@@ -336,6 +337,13 @@ function criarItem(p) {
     item.appendChild(resposta);
   }
 
+  if (p.dica_bonus) {
+    const linha = document.createElement("p");
+    linha.className = "dica";
+    linha.textContent = p.dica_bonus;
+    item.appendChild(linha);
+  }
+
   return item;
 }
 
@@ -454,6 +462,7 @@ function iniciarEdicao(p) {
     alt.marca.checked = Boolean(p.resposta) && alt.campo.value === p.resposta;
   }
   marcarDificuldade(p.dificuldade || null);
+  dica.value = p.dica_bonus || "";
   busca.value = "";
   matches.textContent = "";
   enviar.textContent = "Salvar";
@@ -519,6 +528,7 @@ form.addEventListener("submit", async (e) => {
         p_disciplina: disciplina.value,
         p_resposta: resposta,
         p_dificuldade: dificuldade,
+        p_dica_bonus: dica.value.trim(),
         ...textos,
       });
     } else {
@@ -528,6 +538,7 @@ form.addEventListener("submit", async (e) => {
         p_disciplina: disciplina.value,
         p_resposta: resposta,
         p_dificuldade: dificuldade,
+        p_dica_bonus: dica.value.trim(),
         ...textos,
       });
     }

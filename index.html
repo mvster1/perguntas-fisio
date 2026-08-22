@@ -134,6 +134,7 @@
   #alternativas{display:flex;flex-direction:column;gap:8px;}
   .alternativa{display:flex;align-items:flex-start;gap:8px;}
   .alternativa textarea{min-height:52px;}
+  #dica{min-height:52px;}
   .marca{
     display:flex;
     align-items:center;
@@ -258,6 +259,13 @@
   details p.alt:last-child{padding-bottom:10px;}
   details p.alt.certa{color:var(--acc2);}
   details p.alt.certa::after{content:" ✓";}
+  details p.dica{
+    padding-left:24px;
+    padding-bottom:10px;
+    color:var(--dim);
+    font-style:italic;
+  }
+  details p.dica::before{content:"Dica: ";font-style:normal;}
   details p.a{padding-bottom:10px;}
   details p.a::before{content:"Resposta: ";color:var(--dim);}
   details p.a.sem{color:var(--dim);}
@@ -437,6 +445,8 @@
         <span class="nivel" data-nivel="Média">Média</span>
         <span class="nivel" data-nivel="Alta">Alta</span>
       </div>
+      <p class="orientacao">Se quiser, deixe uma dica bônus para a pergunta</p>
+      <textarea id="dica" placeholder="Dica bônus..."></textarea>
       <div class="acoes">
         <button type="submit" id="enviar">Enviar</button>
         <button type="button" id="cancelar" class="secondary" hidden>Cancelar</button>
