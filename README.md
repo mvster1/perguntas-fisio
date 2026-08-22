@@ -36,7 +36,8 @@ tabela única, `perguntas`:
 | --- | --- | --- |
 | `id` | `bigint` | identidade, chave primária |
 | `pergunta` | `text` | obrigatório |
-| `resposta` | `text` | nulo nos registros anteriores ao campo |
+| `resposta` | `text` | texto da alternativa marcada como correta |
+| `alt_a` a `alt_d` | `text` | as quatro alternativas; nulas nos registros antigos |
 | `disciplina` | `text` | nome exatamente como aparece na picklist |
 | `created_at` | `timestamptz` | `default now()` |
 
@@ -45,9 +46,10 @@ o papel `anon` só alcança as linhas através das funções abaixo. todas são
 `security definer` e recebem a senha como argumento:
 
 - `checar_senha(p_senha)`: lê o segredo do vault e levanta exceção se não bater.
-- `enviar_pergunta(p_pergunta, p_senha, p_disciplina, p_resposta)`: insere.
-- `atualizar_pergunta(p_id, p_pergunta, p_senha, p_disciplina, p_resposta)`:
-  sobrescreve a linha indicada; levanta exceção se o `id` não existir.
+- `enviar_pergunta(p_pergunta, p_senha, p_disciplina, p_resposta, p_alt_a, p_alt_b, p_alt_c, p_alt_d)`:
+  insere.
+- `atualizar_pergunta(p_id, ...)`: mesma lista de campos; sobrescreve a linha
+  indicada e levanta exceção se o `id` não existir.
 - `excluir_pergunta(p_id, p_senha)`: apaga a linha indicada; levanta exceção se
   o `id` não existir.
 - `listar_perguntas(p_senha)`: devolve todas as perguntas, ordenadas por `id`
@@ -74,7 +76,11 @@ direita, que colapsam em uma só abaixo de 900px.
 
 ### envio
 
-o formulário exige disciplina, enunciado e resposta. a disciplina vem de um
+o formulário exige disciplina, enunciado e as quatro alternativas, uma delas
+marcada como correta. as caixas trazem uma marcação exclusiva: marcar uma
+desmarca as demais, e o texto da marcada é copiado para a coluna `resposta` no
+momento do envio. não há coluna que guarde a letra, então, ao editar, a
+alternativa correta é reconhecida pela comparação do texto com `resposta`. a disciplina vem de um
 `<select>` com as 67 unidades curriculares de ensino do curso, agrupadas por
 semestre em `<optgroup>`; as unidades de extensão ficaram de fora. a lista é
 fixa no html, e o banco guarda apenas a string escolhida; não há tabela de
