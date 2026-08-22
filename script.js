@@ -19,6 +19,21 @@ const temaOpts = document.querySelectorAll("[data-tema]");
 let senha = "";
 let editandoId = null;
 let perguntasAtuais = [];
+let timerStatus = null;
+
+function mostrarStatus(texto, classe = "") {
+  clearTimeout(timerStatus);
+  status.className = classe;
+  status.textContent = texto;
+
+  // só as confirmações somem sozinhas; erros ficam até a próxima ação
+  if (classe !== "ok") return;
+
+  timerStatus = setTimeout(() => {
+    status.classList.add("sumindo");
+    timerStatus = setTimeout(() => mostrarStatus(""), 600);
+  }, 3000);
+}
 
 const opcoes = [...disciplina.options].filter((o) => o.value);
 
@@ -151,20 +166,17 @@ async function excluirPergunta(caixa, p) {
     return;
   }
 
-  status.className = "";
-  status.textContent = "Excluindo...";
+  mostrarStatus("Excluindo...");
 
   try {
     await rpc("excluir_pergunta", { p_id: p.id, p_senha: tentativa });
     if (editandoId === p.id) sairDaEdicao();
-    status.className = "ok";
-    status.textContent = "Pergunta excluída.";
+    mostrarStatus("Pergunta excluída.", "ok");
     renderLista(await rpc("listar_perguntas", { p_senha: senha }));
   } catch (err) {
     console.error(err);
     montarExcluir(caixa, p);
-    status.className = "err";
-    status.textContent = "Erro ao excluir.";
+    mostrarStatus("Erro ao excluir.", "err");
   }
 }
 
@@ -298,8 +310,7 @@ function iniciarEdicao(p) {
   matches.textContent = "";
   enviar.textContent = "Salvar";
   cancelar.hidden = false;
-  status.className = "";
-  status.textContent = `Editando a pergunta #${p.id}.`;
+  mostrarStatus(`Editando a pergunta #${p.id}.`);
   form.scrollIntoView({ behavior: "smooth", block: "start" });
   textarea.focus();
 }
@@ -314,8 +325,7 @@ function sairDaEdicao() {
 
 cancelar.addEventListener("click", () => {
   sairDaEdicao();
-  status.className = "";
-  status.textContent = "";
+  mostrarStatus("");
 });
 
 form.addEventListener("submit", async (e) => {
@@ -327,8 +337,7 @@ form.addEventListener("submit", async (e) => {
   const editando = editandoId;
 
   enviar.disabled = true;
-  status.className = "";
-  status.textContent = editando ? "Salvando..." : "Enviando...";
+  mostrarStatus(editando ? "Salvando..." : "Enviando...");
 
   try {
     if (editando) {
@@ -348,13 +357,11 @@ form.addEventListener("submit", async (e) => {
       });
     }
     sairDaEdicao();
-    status.className = "ok";
-    status.textContent = editando ? "Pergunta atualizada." : "Pergunta enviada.";
+    mostrarStatus(editando ? "Pergunta atualizada." : "Pergunta enviada.", "ok");
     renderLista(await rpc("listar_perguntas", { p_senha: senha }));
   } catch (err) {
     console.error(err);
-    status.className = "err";
-    status.textContent = editando ? "Erro ao salvar." : "Erro ao enviar.";
+    mostrarStatus(editando ? "Erro ao salvar." : "Erro ao enviar.", "err");
   } finally {
     enviar.disabled = false;
   }

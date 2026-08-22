@@ -50,8 +50,8 @@ o papel `anon` só alcança as linhas através das funções abaixo. todas são
   sobrescreve a linha indicada; levanta exceção se o `id` não existir.
 - `excluir_pergunta(p_id, p_senha)`: apaga a linha indicada; levanta exceção se
   o `id` não existir.
-- `listar_perguntas(p_senha)`: devolve as vinte perguntas mais recentes,
-  ordenadas por `id` decrescente.
+- `listar_perguntas(p_senha)`: devolve todas as perguntas, ordenadas por `id`
+  decrescente.
 
 a senha correta nunca chega ao cliente: fica no supabase vault, sob o nome
 `senha_formulario`, e a comparação acontece dentro do banco.
@@ -175,8 +175,8 @@ tema é o único recurso que se comporta de forma diferente sob `file://`.
 - a política `Allow public insert`, criada na primeira migração, ainda permite
   inserção direta na tabela sem senha. remova-a se quiser que todo caminho de
   escrita passe por `enviar_pergunta`.
-- `listar_perguntas` tem limite fixo de vinte linhas, e as buscas da página
-  operam apenas sobre o que já foi carregado.
+- a listagem não é paginada: `listar_perguntas` devolve a tabela inteira de uma
+  vez, e as buscas da página operam sobre o que já foi carregado.
 - editar uma pergunta cuja disciplina saiu da picklist deixa o `<select>` vazio,
   e o campo é obrigatório: será preciso escolher outra para salvar.
 

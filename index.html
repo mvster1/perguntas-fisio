@@ -127,7 +127,13 @@
   button:hover{opacity:.85;}
   button:active{transform:translateY(1px);}
   button:disabled{opacity:.5;cursor:default;transform:none;}
-  #status{color:var(--dim);font-size:12px;min-height:16px;}
+  #status{
+    color:var(--dim);
+    font-size:12px;
+    min-height:16px;
+    transition:opacity .6s ease;
+  }
+  #status.sumindo{opacity:0;}
   #status.err{color:var(--err);}
   #status.ok{color:var(--acc2);}
   #lista{display:flex;flex-direction:column;}
@@ -201,7 +207,7 @@
 <main id="main" hidden>
 
 <h1>Perguntas e Respostas para o Jogo - Fisioterapia</h1>
-<div class="sub">Envie aqui uma pergunta para o jogo. As vinte mais recentes ficam listadas abaixo para consulta.</div>
+<div class="sub">Envie aqui uma pergunta para o jogo. As perguntas criadas ficam listadas abaixo para consulta.</div>
 
 <div class="colunas">
   <section>
