@@ -6,11 +6,20 @@ const main = document.getElementById("main");
 const form = document.getElementById("form");
 const textarea = document.getElementById("pergunta");
 const disciplina = document.getElementById("disciplina");
-const respostaBox = document.getElementById("resposta");
+const alternativas = ["a", "b", "c", "d"].map((letra) => ({
+  letra,
+  campo: document.getElementById(`alt-${letra}`),
+  marca: document.querySelector(`.correta[data-alt="${letra}"]`),
+}));
 const busca = document.getElementById("busca");
 const matches = document.getElementById("matches");
 const cancelar = document.getElementById("cancelar");
 const buscaPergunta = document.getElementById("busca-pergunta");
+const niveis = [...document.querySelectorAll("#dificuldade .nivel")];
+const paginacao = document.getElementById("paginacao");
+const paginaAnterior = document.getElementById("pagina-anterior");
+const paginaProxima = document.getElementById("pagina-proxima");
+const paginaAtualTexto = document.getElementById("pagina-atual");
 const enviar = document.getElementById("enviar");
 const status = document.getElementById("status");
 const lista = document.getElementById("lista");
@@ -19,6 +28,9 @@ const temaOpts = document.querySelectorAll("[data-tema]");
 let senha = "";
 let editandoId = null;
 let perguntasAtuais = [];
+let paginaAtual = 1;
+let porPagina = 12;
+let dificuldade = null;
 let timerStatus = null;
 
 function mostrarStatus(texto, classe = "") {
@@ -106,15 +118,58 @@ function marcarTema(tema) {
   }
 }
 
+function aplicarTema(tema) {
+  document.documentElement.dataset.theme = tema;
+  marcarTema(tema);
+}
+
 for (const opt of temaOpts) {
   opt.addEventListener("click", () => {
-    document.documentElement.dataset.theme = opt.dataset.tema;
     localStorage.setItem("tema", opt.dataset.tema);
-    marcarTema(opt.dataset.tema);
+    aplicarTema(opt.dataset.tema);
   });
 }
 
+// segue o tema do sistema enquanto a página está aberta, a menos que
+// já tenha havido uma escolha manual no rodapé
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+  if (localStorage.getItem("tema")) return;
+  aplicarTema(e.matches ? "dark" : "light");
+});
+
 marcarTema(document.documentElement.dataset.theme);
+
+for (const alt of alternativas) {
+  alt.marca.addEventListener("change", () => {
+    // só uma alternativa pode ser a correta
+    if (!alt.marca.checked) return;
+    for (const outra of alternativas) {
+      if (outra !== alt) outra.marca.checked = false;
+    }
+  });
+}
+
+function marcarDificuldade(valor) {
+  dificuldade = valor;
+  for (const nivel of niveis) {
+    nivel.classList.toggle("ativo", nivel.dataset.nivel === valor);
+  }
+}
+
+for (const nivel of niveis) {
+  nivel.addEventListener("click", () => marcarDificuldade(nivel.dataset.nivel));
+}
+
+function alternativaCorreta() {
+  return alternativas.find((alt) => alt.marca.checked) || null;
+}
+
+function limparAlternativas() {
+  for (const alt of alternativas) {
+    alt.campo.value = "";
+    alt.marca.checked = false;
+  }
+}
 
 async function rpc(nome, params) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${nome}`, {
@@ -145,15 +200,14 @@ function acaoDoResumo(texto, classe, aoClicar) {
 
 function montarExcluir(caixa, p) {
   caixa.textContent = "";
-  caixa.appendChild(acaoDoResumo("[Excluir]", "op", () => confirmarExclusao(caixa, p)));
+  caixa.appendChild(acaoDoResumo("Excluir", "op", () => confirmarExclusao(caixa, p)));
 }
 
 function confirmarExclusao(caixa, p) {
-  caixa.textContent = "[";
+  caixa.textContent = "";
   caixa.appendChild(acaoDoResumo("Sim", "op sim", () => excluirPergunta(caixa, p)));
   caixa.appendChild(document.createTextNode(" / "));
   caixa.appendChild(acaoDoResumo("Não", "op nao", () => montarExcluir(caixa, p)));
-  caixa.appendChild(document.createTextNode("]"));
 }
 
 async function excluirPergunta(caixa, p) {
@@ -180,11 +234,49 @@ async function excluirPergunta(caixa, p) {
   }
 }
 
+function medirPorPagina() {
+  // mede o summary, e não o .grupo: durante a busca os grupos ficam abertos
+  // e a altura do <details> deixaria de representar uma linha da lista
+  const summary = lista.querySelector(".grupo > summary");
+  const alturaLinha = summary ? summary.offsetHeight + 1 : 32;
+  // o rodapé ainda pode estar oculto na primeira medição, mas o espaço dele
+  // precisa ser descontado do mesmo jeito
+  const alturaRodape = paginacao.hidden ? 27 : paginacao.offsetHeight;
+  const disponivel =
+    form.getBoundingClientRect().bottom -
+    lista.getBoundingClientRect().top -
+    alturaRodape;
+
+  return Math.max(3, Math.floor(disponivel / alturaLinha));
+}
+
+function desenharPaginacao(totalPaginas) {
+  paginacao.hidden = totalPaginas <= 1;
+  if (paginacao.hidden) return;
+
+  paginaAtualTexto.textContent = `${paginaAtual} / ${totalPaginas}`;
+  paginaAnterior.classList.toggle("desativado", paginaAtual === 1);
+  paginaProxima.classList.toggle("desativado", paginaAtual === totalPaginas);
+}
+
+function ajustarPorPagina() {
+  const novo = medirPorPagina();
+  if (novo === porPagina) return;
+  porPagina = novo;
+  desenharLista();
+}
+
+function irParaPagina(destino, totalPaginas) {
+  if (destino < 1 || destino > totalPaginas) return;
+  paginaAtual = destino;
+  desenharLista();
+}
+
 function criarItem(p) {
   const item = document.createElement("details");
   const summary = document.createElement("summary");
 
-  const editar = acaoDoResumo("[Editar]", "editar", () => iniciarEdicao(p));
+  const editar = acaoDoResumo("Editar", "editar", () => iniciarEdicao(p));
 
   const excluir = document.createElement("span");
   excluir.className = "excluir";
@@ -204,25 +296,53 @@ function criarItem(p) {
   summary.appendChild(editar);
   summary.appendChild(excluir);
   summary.appendChild(titulo);
+
+  if (p.dificuldade) {
+    const dif = document.createElement("span");
+    dif.className = "dif";
+    dif.dataset.nivel = p.dificuldade;
+    dif.textContent = p.dificuldade;
+    summary.appendChild(dif);
+  }
+
   summary.appendChild(time);
 
   const texto = document.createElement("p");
   texto.className = "q";
   texto.textContent = p.pergunta;
 
-  const resposta = document.createElement("p");
-  resposta.className = p.resposta ? "a" : "a sem";
-  resposta.textContent = p.resposta || "Resposta não existe para essa pergunta.";
-
   item.appendChild(summary);
   item.appendChild(texto);
-  item.appendChild(resposta);
+
+  const letras = ["a", "b", "c", "d"];
+  const temAlternativas = letras.some((letra) => p[`alt_${letra}`]);
+
+  if (temAlternativas) {
+    for (const letra of letras) {
+      const alt = p[`alt_${letra}`];
+      if (!alt) continue;
+
+      const linha = document.createElement("p");
+      const certa = Boolean(p.resposta) && alt === p.resposta;
+      linha.className = certa ? "alt certa" : "alt";
+      linha.textContent = `${letra}) ${alt}`;
+      item.appendChild(linha);
+    }
+  } else {
+    // registros anteriores às alternativas guardam só a resposta
+    const resposta = document.createElement("p");
+    resposta.className = p.resposta ? "a" : "a sem";
+    resposta.textContent = p.resposta || "Resposta não existe para essa pergunta.";
+    item.appendChild(resposta);
+  }
+
   return item;
 }
 
 function renderLista(perguntas) {
   perguntasAtuais = perguntas || [];
   buscaPergunta.value = "";
+  paginaAtual = 1;
   desenharLista();
 }
 
@@ -241,6 +361,7 @@ function desenharLista() {
       ? "Nenhuma pergunta encontrada."
       : "Nenhuma pergunta enviada ainda.";
     lista.appendChild(vazio);
+    paginacao.hidden = true;
     return;
   }
 
@@ -253,7 +374,12 @@ function desenharLista() {
     grupos.get(chave).push(p);
   }
 
-  for (const [chave, itens] of grupos) {
+  const disciplinas = [...grupos];
+  const totalPaginas = Math.max(1, Math.ceil(disciplinas.length / porPagina));
+  paginaAtual = Math.min(paginaAtual, totalPaginas);
+  const inicio = (paginaAtual - 1) * porPagina;
+
+  for (const [chave, itens] of disciplinas.slice(inicio, inicio + porPagina)) {
     const grupo = document.createElement("details");
     grupo.className = "grupo";
     // com busca ativa, a disciplina do resultado já aparece aberta
@@ -277,9 +403,23 @@ function desenharLista() {
     for (const p of itens) grupo.appendChild(criarItem(p));
     lista.appendChild(grupo);
   }
+
+  desenharPaginacao(totalPaginas);
+
+  paginaAnterior.onclick = () => irParaPagina(paginaAtual - 1, totalPaginas);
+  paginaProxima.onclick = () => irParaPagina(paginaAtual + 1, totalPaginas);
 }
 
-buscaPergunta.addEventListener("input", desenharLista);
+buscaPergunta.addEventListener("input", () => {
+  // a busca muda o conjunto de disciplinas, então a contagem recomeça
+  paginaAtual = 1;
+  desenharLista();
+});
+
+addEventListener("resize", ajustarPorPagina);
+
+// a Inter chega depois do primeiro desenho e muda a altura da linha
+if (document.fonts) document.fonts.ready.then(ajustarPorPagina);
 
 async function autenticar() {
   let aviso = "Senha:";
@@ -293,6 +433,8 @@ async function autenticar() {
       senha = tentativa;
       main.hidden = false;
       renderLista(perguntas);
+      // só dá para medir depois que a lista existe e o main está visível
+      ajustarPorPagina();
       return;
     } catch (err) {
       console.error(err);
@@ -305,19 +447,29 @@ function iniciarEdicao(p) {
   editandoId = p.id;
   disciplina.value = p.disciplina || "";
   textarea.value = p.pergunta;
-  respostaBox.value = p.resposta || "";
+
+  for (const alt of alternativas) {
+    alt.campo.value = p[`alt_${alt.letra}`] || "";
+    // sem coluna que guarde a letra, a correta é reconhecida pelo texto
+    alt.marca.checked = Boolean(p.resposta) && alt.campo.value === p.resposta;
+  }
+  marcarDificuldade(p.dificuldade || null);
   busca.value = "";
   matches.textContent = "";
   enviar.textContent = "Salvar";
   cancelar.hidden = false;
   mostrarStatus(`Editando a pergunta #${p.id}.`);
-  form.scrollIntoView({ behavior: "smooth", block: "start" });
-  textarea.focus();
+  // preventScroll evita que o foco arraste a página para o campo e cancele a
+  // rolagem abaixo, que no celular precisa subir da lista até o formulário
+  textarea.focus({ preventScroll: true });
+  scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function sairDaEdicao() {
   editandoId = null;
   form.reset();
+  limparAlternativas();
+  marcarDificuldade(null);
   matches.textContent = "";
   enviar.textContent = "Enviar";
   cancelar.hidden = true;
@@ -331,8 +483,27 @@ cancelar.addEventListener("click", () => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const pergunta = textarea.value.trim();
-  const resposta = respostaBox.value.trim();
-  if (!pergunta || !resposta || !disciplina.value) return;
+  const correta = alternativaCorreta();
+
+  if (!pergunta || !disciplina.value) return;
+  if (alternativas.some((alt) => !alt.campo.value.trim())) {
+    mostrarStatus("Preencha as quatro alternativas.", "err");
+    return;
+  }
+  if (!correta) {
+    mostrarStatus("Marque qual alternativa é a correta.", "err");
+    return;
+  }
+  if (!dificuldade) {
+    mostrarStatus("Escolha a dificuldade.", "err");
+    return;
+  }
+
+  // a resposta é o próprio texto da alternativa marcada
+  const resposta = correta.campo.value.trim();
+  const textos = Object.fromEntries(
+    alternativas.map((alt) => [`p_alt_${alt.letra}`, alt.campo.value.trim()])
+  );
 
   const editando = editandoId;
 
@@ -347,6 +518,8 @@ form.addEventListener("submit", async (e) => {
         p_senha: senha,
         p_disciplina: disciplina.value,
         p_resposta: resposta,
+        p_dificuldade: dificuldade,
+        ...textos,
       });
     } else {
       await rpc("enviar_pergunta", {
@@ -354,6 +527,8 @@ form.addEventListener("submit", async (e) => {
         p_senha: senha,
         p_disciplina: disciplina.value,
         p_resposta: resposta,
+        p_dificuldade: dificuldade,
+        ...textos,
       });
     }
     sairDaEdicao();
