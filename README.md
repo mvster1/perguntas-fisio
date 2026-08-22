@@ -1,14 +1,15 @@
 # perguntas-fisio
 
 formulário mínimo para coletar perguntas de fisioterapia. html, css e javascript
-puros no navegador; postgres no supabase como único backend. sem framework, sem
-build, sem dependência em tempo de execução.
+puros no navegador; postgres no supabase como único backend. sem framework e sem
+build; a única dependência externa da página é a fonte montserrat, servida pelo
+google fonts.
 
 ## filosofia
 
 - o site inteiro são três arquivos: `index.html`, `script.js` e `config.js`.
 - nenhuma biblioteca é carregada no navegador — `fetch` fala direto com a api
-  rest do supabase.
+  rest do supabase; o único recurso de terceiros é a folha de estilo da fonte.
 - o css mora dentro do `<style>` do próprio html, porque é curto o bastante
   para caber lá.
 - a única dependência de desenvolvimento é a cli do supabase, usada apenas para
@@ -37,7 +38,10 @@ o cliente nunca conhece a senha correta. ela é guardada no supabase vault, sob 
 nome `senha_formulario`, e comparada dentro de funções `security definer`:
 
 - `checar_senha(p_senha)` — lê o segredo do vault e levanta exceção se não bater.
-- `enviar_pergunta(p_pergunta, p_senha)` — checa a senha e insere a pergunta.
+- `enviar_pergunta(p_pergunta, p_senha, p_disciplina, p_resposta)` — checa a
+  senha e insere a pergunta com a disciplina escolhida e a resposta.
+- `atualizar_pergunta(p_id, p_pergunta, p_senha, p_disciplina, p_resposta)` —
+  checa a senha e sobrescreve a pergunta indicada.
 - `listar_perguntas(p_senha)` — checa a senha e devolve as vinte perguntas mais
   recentes.
 
