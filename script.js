@@ -8,12 +8,6 @@ const textarea = document.getElementById("pergunta");
 const status = document.getElementById("status");
 const lista = document.getElementById("lista");
 
-const dialog = document.getElementById("senha-dialog");
-const senhaForm = document.getElementById("senha-form");
-const senhaInput = document.getElementById("senha-input");
-const erroSenha = document.getElementById("erro-senha");
-const senhaConfirmar = document.getElementById("senha-confirmar");
-
 let senha = "";
 
 async function rpc(nome, params) {
@@ -66,27 +60,25 @@ function renderLista(perguntas) {
   }
 }
 
-senhaForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const tentativa = senhaInput.value;
-  if (!tentativa) return;
+async function autenticar() {
+  let aviso = "Senha:";
 
-  senhaConfirmar.disabled = true;
-  erroSenha.textContent = "";
+  for (;;) {
+    const tentativa = prompt(aviso);
+    if (tentativa === null) return;
 
-  try {
-    const perguntas = await rpc("listar_perguntas", { p_senha: tentativa });
-    senha = tentativa;
-    dialog.close();
-    main.hidden = false;
-    renderLista(perguntas);
-  } catch (err) {
-    erroSenha.textContent = "Senha incorreta.";
-    console.error(err);
-  } finally {
-    senhaConfirmar.disabled = false;
+    try {
+      const perguntas = await rpc("listar_perguntas", { p_senha: tentativa });
+      senha = tentativa;
+      main.hidden = false;
+      renderLista(perguntas);
+      return;
+    } catch (err) {
+      console.error(err);
+      aviso = "Senha incorreta. Tente novamente:";
+    }
   }
-});
+}
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -106,5 +98,4 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-dialog.showModal();
-senhaInput.focus();
+autenticar();

@@ -20,16 +20,18 @@ build, sem dependência em tempo de execução.
 | arquivo | função |
 | --- | --- |
 | `index.html` | marcação e estilo da página |
-| `script.js` | envio do formulário, listagem e diálogo de senha |
+| `script.js` | pedido de senha, envio do formulário e listagem |
 | `config.js` | url e chave publicável do supabase (gerado) |
 | `generate-config.js` | escreve o `config.js` a partir do `.env` |
 | `supabase/migrations/` | esquema e funções do banco |
 
 ## como funciona
 
-ao abrir a página, um `<dialog>` modal pede a senha. a senha é enviada à função
-`listar_perguntas`; se o banco aceitar, o conteúdo aparece e a senha fica em
-memória para os envios seguintes. se recusar, nada é revelado.
+antes de qualquer coisa aparecer, o script chama o `prompt()` nativo do
+navegador e pede a senha. a resposta é enviada à função `listar_perguntas`; se o
+banco aceitar, o conteúdo é revelado e a senha fica em memória para os envios
+seguintes. se recusar, o `prompt()` reaparece; se for cancelado, a página
+permanece vazia.
 
 o cliente nunca conhece a senha correta. ela é guardada no supabase vault, sob o
 nome `senha_formulario`, e comparada dentro de funções `security definer`:
