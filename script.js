@@ -10,6 +10,7 @@ const respostaBox = document.getElementById("resposta");
 const busca = document.getElementById("busca");
 const matches = document.getElementById("matches");
 const cancelar = document.getElementById("cancelar");
+const buscaPergunta = document.getElementById("busca-pergunta");
 const enviar = document.getElementById("enviar");
 const status = document.getElementById("status");
 const lista = document.getElementById("lista");
@@ -17,6 +18,7 @@ const temaOpts = document.querySelectorAll("[data-tema]");
 
 let senha = "";
 let editandoId = null;
+let perguntasAtuais = [];
 
 const opcoes = [...disciplina.options].filter((o) => o.value);
 
@@ -27,43 +29,61 @@ function normalizar(texto) {
     .toLowerCase();
 }
 
+function montarMatches(caixa, achados, aviso, aoEscolher) {
+  caixa.textContent = "";
+
+  if (achados.length === 0) {
+    const vazio = document.createElement("div");
+    vazio.className = "sem";
+    vazio.textContent = aviso;
+    caixa.appendChild(vazio);
+    return;
+  }
+
+  for (const achado of achados) {
+    const item = document.createElement("div");
+    item.textContent = achado.texto;
+    item.title = achado.texto;
+    item.addEventListener("click", () => aoEscolher(achado));
+    caixa.appendChild(item);
+  }
+}
+
+function ligarBusca(campo, caixa, aviso, obterItens, aoEscolher) {
+  campo.addEventListener("input", () => {
+    const termo = normalizar(campo.value.trim());
+    caixa.textContent = "";
+    if (!termo) return;
+
+    const achados = obterItens()
+      .filter((i) => normalizar(i.texto).includes(termo))
+      .slice(0, 8);
+
+    montarMatches(caixa, achados, aviso, aoEscolher);
+  });
+
+  campo.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    // sem isto o Enter submeteria o formulário
+    e.preventDefault();
+    const primeiro = caixa.querySelector("div:not(.sem)");
+    if (primeiro) primeiro.click();
+  });
+}
+
 function selecionarDisciplina(nome) {
   disciplina.value = nome;
   busca.value = "";
   matches.textContent = "";
 }
 
-busca.addEventListener("input", () => {
-  const termo = normalizar(busca.value.trim());
-  matches.textContent = "";
-  if (!termo) return;
-
-  const achados = opcoes
-    .filter((o) => normalizar(o.value).includes(termo))
-    .slice(0, 8);
-
-  if (achados.length === 0) {
-    const vazio = document.createElement("div");
-    vazio.className = "sem";
-    vazio.textContent = "Nenhuma disciplina encontrada.";
-    matches.appendChild(vazio);
-    return;
-  }
-
-  for (const o of achados) {
-    const item = document.createElement("div");
-    item.textContent = o.value;
-    item.addEventListener("click", () => selecionarDisciplina(o.value));
-    matches.appendChild(item);
-  }
-});
-
-busca.addEventListener("keydown", (e) => {
-  if (e.key !== "Enter") return;
-  e.preventDefault();
-  const primeiro = matches.querySelector("div:not(.sem)");
-  if (primeiro) selecionarDisciplina(primeiro.textContent);
-});
+ligarBusca(
+  busca,
+  matches,
+  "Nenhuma disciplina encontrada.",
+  () => opcoes.map((o) => ({ texto: o.value })),
+  (achado) => selecionarDisciplina(achado.texto)
+);
 
 function marcarTema(tema) {
   for (const opt of temaOpts) {
@@ -139,12 +159,25 @@ function criarItem(p) {
 }
 
 function renderLista(perguntas) {
+  perguntasAtuais = perguntas || [];
+  buscaPergunta.value = "";
+  desenharLista();
+}
+
+function desenharLista() {
+  const termo = normalizar(buscaPergunta.value.trim());
+  const visiveis = termo
+    ? perguntasAtuais.filter((p) => normalizar(p.pergunta).includes(termo))
+    : perguntasAtuais;
+
   lista.textContent = "";
 
-  if (!perguntas || perguntas.length === 0) {
+  if (visiveis.length === 0) {
     const vazio = document.createElement("p");
     vazio.className = "empty";
-    vazio.textContent = "Nenhuma pergunta enviada ainda.";
+    vazio.textContent = termo
+      ? "Nenhuma pergunta encontrada."
+      : "Nenhuma pergunta enviada ainda.";
     lista.appendChild(vazio);
     return;
   }
@@ -152,7 +185,7 @@ function renderLista(perguntas) {
   // a lista já vem por id desc, então o Map preserva as disciplinas
   // na ordem da pergunta mais recente de cada uma
   const grupos = new Map();
-  for (const p of perguntas) {
+  for (const p of visiveis) {
     const chave = p.disciplina || "Sem disciplina";
     if (!grupos.has(chave)) grupos.set(chave, []);
     grupos.get(chave).push(p);
@@ -161,6 +194,8 @@ function renderLista(perguntas) {
   for (const [chave, itens] of grupos) {
     const grupo = document.createElement("details");
     grupo.className = "grupo";
+    // com busca ativa, a disciplina do resultado já aparece aberta
+    grupo.open = Boolean(termo);
 
     const summary = document.createElement("summary");
 
@@ -181,6 +216,8 @@ function renderLista(perguntas) {
     lista.appendChild(grupo);
   }
 }
+
+buscaPergunta.addEventListener("input", desenharLista);
 
 async function autenticar() {
   let aviso = "Senha:";

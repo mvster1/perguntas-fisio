@@ -46,7 +46,7 @@
     line-height:1.5;
   }
   body{
-    max-width:720px;
+    max-width:1080px;
     margin:0 auto;
     padding:32px 16px 80px;
   }
@@ -58,6 +58,15 @@
   }
   .sub{color:var(--dim);font-size:12px;margin-bottom:24px;}
   section{margin-top:28px;}
+  .colunas{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:32px;
+    align-items:start;
+  }
+  @media (max-width:900px){
+    .colunas{grid-template-columns:minmax(0,1fr);gap:0;}
+  }
   section h2{
     font-size:12px;
     color:var(--dim);
@@ -92,18 +101,22 @@
     font-weight:400;
   }
   button.secondary:hover{color:var(--fg);opacity:1;}
-  #busca-box{display:flex;flex-direction:column;gap:4px;}
-  #busca{width:100%;}
-  #matches:empty{display:none;}
-  #matches div{
+  .busca-box{display:flex;flex-direction:column;gap:4px;}
+  .busca-box input{width:100%;}
+  #busca-lista{margin-bottom:12px;}
+  .matches:empty{display:none;}
+  .matches div{
     color:var(--acc2);
     font-size:12px;
     padding:2px 0;
     cursor:pointer;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
-  #matches div:hover{text-decoration:underline;}
-  #matches div.sem{color:var(--dim);cursor:default;}
-  #matches div.sem:hover{text-decoration:none;}
+  .matches div:hover{text-decoration:underline;}
+  .matches div.sem{color:var(--dim);cursor:default;}
+  .matches div.sem:hover{text-decoration:none;}
   button{
     background:var(--acc);
     color:var(--btn-fg);
@@ -185,117 +198,122 @@
 <h1>Perguntas e Respostas para o Jogo - Fisioterapia</h1>
 <div class="sub">Envie aqui uma pergunta para o jogo. As vinte mais recentes ficam listadas abaixo para consulta.</div>
 
-<section>
-  <h2>Nova Pergunta</h2>
-  <form id="form">
-    <select id="disciplina" required>
-      <option value="" disabled selected>Selecione a disciplina...</option>
-      <optgroup label="1º Semestre">
-        <option>Morfofuncional dos Sist. Cardiovascular, Respiratório, Geniturinário, Tegumentar e Hematopoiético</option>
-        <option>Fundamentos em Fisioterapia: Atuação, Ética, Bioética no Exercício Profissional</option>
-        <option>Ciências Sociais e Humanas Aplicadas à Saúde</option>
-        <option>Saúde Pública, Ambiente e Epidemiologia</option>
-        <option>Bases Moleculares e Celulares</option>
-      </optgroup>
-      <optgroup label="2º Semestre">
-        <option>Morfofuncional dos Sistemas Locomotor, Nervoso e Endócrino</option>
-        <option>Massoterapia</option>
-        <option>Bioquímica</option>
-        <option>Microbiologia, Imunologia e Parasitologia</option>
-      </optgroup>
-      <optgroup label="3º Semestre">
-        <option>Métodos de Avaliação Clínica e Funcional dos Membros Superiores</option>
-        <option>Cinesiologia e Biomecânica dos Membros Superiores</option>
-        <option>Patologia Geral</option>
-        <option>Procedimentos Básicos em Fisioterapia</option>
-        <option>Farmacologia Aplicada à Fisioterapia</option>
-        <option>Fisiologia do Exercício</option>
-        <option>Saúde Baseada em Evidência (Pesquisa)</option>
-      </optgroup>
-      <optgroup label="4º Semestre">
-        <option>Cinesiologia e Biomecânica dos Membros Inferiores e Tronco</option>
-        <option>Métodos de Avaliação Clínica e Funcional dos MMII e Tronco</option>
-        <option>Hidroterapia</option>
-        <option>Agentes Eletro-físicos (Eletrofototermoterapia)</option>
-        <option>Fundamentos de Fisioterapia em Neurologia</option>
-      </optgroup>
-      <optgroup label="5º Semestre">
-        <option>Cinesioterapia</option>
-        <option>Terapia Manual</option>
-        <option>Fundamentos de Fisioterapia Musculoesquelética</option>
-        <option>Fundamentos em Pneumologia</option>
-        <option>Fundamentos de Geriatria</option>
-        <option>Fundamentos de Pediatria e Neonatologia</option>
-      </optgroup>
-      <optgroup label="6º Semestre">
-        <option>Análises Clínicas, Laboratoriais e de Imagem</option>
-        <option>Fundamentos de Cardiologia</option>
-        <option>Fundamentos em Uroproctológicas, Ginecológicas e Obstetrícia</option>
-        <option>Fundamentos de Oncologia</option>
-        <option>Fisioterapia Aplicada às Disfunções Musculoesqueléticas</option>
-        <option>Fisioterapia Aplicada a Dermatofuncional e Disfunções Vasculares</option>
-        <option>Fisioterapia Aplicada As Disfunções Respiratórias - Ambulatorial</option>
-      </optgroup>
-      <optgroup label="7º Semestre">
-        <option>Fisioterapia Aplicada As Disfunções Uroproctológicas e Ginecológicas</option>
-        <option>Fisioterapia Aplicada à Obstetrícia</option>
-        <option>Fisioterapia Aplicada As Disfunções Neurológicas</option>
-        <option>Fisioterapia Aplicada À Oncologia</option>
-        <option>Fisioterapia Aplicada a Saúde do Trabalhador e Ergonomia</option>
-        <option>Fisioterapia Aplicada As Disfunções Respiratórias - Hospital</option>
-        <option>Próteses e Órteses Aplicadas à Fisioterapia</option>
-        <option>Estágio Supervisionado Preparatório Em Disfunções Musculoesqueléticas</option>
-        <option>Estágio Supervisionado Preparatório em Disfunções Obstétricas</option>
-      </optgroup>
-      <optgroup label="8º Semestre">
-        <option>Fisioterapia Aplicada As Disfunções Cardioangiológicas</option>
-        <option>Fisioterapia Aplicada as Disfunções Crânio-Mandibulares e Oculomotoras</option>
-        <option>Fisioterapia Aplicada ao Esporte</option>
-        <option>Fisioterapia Aplicada a Geriatria</option>
-        <option>Fisioterapia Aplicada a Pediatria e Fisioterapia Neonatal</option>
-        <option>Gestão, empreendedorismo</option>
-        <option>Psicologia Aplicada à Saúde - Fisioterapia</option>
-        <option>Projetos de Pesquisa e Estatística aplicada à saúde</option>
-        <option>Estágio Supervisionado Preparatório em Disfunções Neurológicas</option>
-        <option>Estágio Supervisionado Preparatório em Fisioterapia Hospitalar</option>
-      </optgroup>
-      <optgroup label="9º Semestre">
-        <option>Prática Sup. nas Disf. Musculoesqueléticas (Traumato + ortopedia + reumatologia + desportiva)</option>
-        <option>Prática Supervisionada Em Geriatria</option>
-        <option>Prática Supervisionada Em Saúde Pública</option>
-        <option>Prática Supervisionada Em Disfunções Cardio-Angiológicas</option>
-        <option>Prática Supervisionada Em Disfunções Respiratórias</option>
-        <option>Prática Supervisionada Em Hidroterapia (individual + grupo)</option>
-        <option>Prática Supervisionada Em Dermatofuncional E Disfunções Vasculares</option>
-      </optgroup>
-      <optgroup label="10º Semestre">
-        <option>Inovação em saúde</option>
-        <option>Prática Supervisionada Em Hospital Geral E UTI E Urgência e Emergência</option>
-        <option>Prática Super. Em Disfunções Uroproctológicas, ginecológicas E Obstétricas</option>
-        <option>Prática Supervisionada Em Oncologia</option>
-        <option>Pratica Supervisionada em Saúde do Trabalhador e Ergonomia</option>
-        <option>Prática Supervisionada nas Disfunções Crânio-mandibulares e Oculomotoras</option>
-        <option>Prática Supervisionada Em Disfunções Neurológicas</option>
-      </optgroup>
-    </select>
-    <div id="busca-box">
-      <input id="busca" type="text" placeholder="Buscar disciplina..." autocomplete="off">
-      <div id="matches"></div>
-    </div>
-    <textarea id="pergunta" placeholder="Digite o enunciado da pergunta..." required></textarea>
-    <textarea id="resposta" placeholder="Digite a resposta..." required></textarea>
-    <div class="acoes">
-      <button type="submit" id="enviar">Enviar</button>
-      <button type="button" id="cancelar" class="secondary" hidden>Cancelar</button>
-    </div>
-    <p id="status"></p>
-  </form>
-</section>
+<div class="colunas">
+  <section>
+    <h2>Nova Pergunta</h2>
+    <form id="form">
+      <select id="disciplina" required>
+        <option value="" disabled selected>Selecione a disciplina...</option>
+        <optgroup label="1º Semestre">
+          <option>Morfofuncional dos Sist. Cardiovascular, Respiratório, Geniturinário, Tegumentar e Hematopoiético</option>
+          <option>Fundamentos em Fisioterapia: Atuação, Ética, Bioética no Exercício Profissional</option>
+          <option>Ciências Sociais e Humanas Aplicadas à Saúde</option>
+          <option>Saúde Pública, Ambiente e Epidemiologia</option>
+          <option>Bases Moleculares e Celulares</option>
+        </optgroup>
+        <optgroup label="2º Semestre">
+          <option>Morfofuncional dos Sistemas Locomotor, Nervoso e Endócrino</option>
+          <option>Massoterapia</option>
+          <option>Bioquímica</option>
+          <option>Microbiologia, Imunologia e Parasitologia</option>
+        </optgroup>
+        <optgroup label="3º Semestre">
+          <option>Métodos de Avaliação Clínica e Funcional dos Membros Superiores</option>
+          <option>Cinesiologia e Biomecânica dos Membros Superiores</option>
+          <option>Patologia Geral</option>
+          <option>Procedimentos Básicos em Fisioterapia</option>
+          <option>Farmacologia Aplicada à Fisioterapia</option>
+          <option>Fisiologia do Exercício</option>
+          <option>Saúde Baseada em Evidência (Pesquisa)</option>
+        </optgroup>
+        <optgroup label="4º Semestre">
+          <option>Cinesiologia e Biomecânica dos Membros Inferiores e Tronco</option>
+          <option>Métodos de Avaliação Clínica e Funcional dos MMII e Tronco</option>
+          <option>Hidroterapia</option>
+          <option>Agentes Eletro-físicos (Eletrofototermoterapia)</option>
+          <option>Fundamentos de Fisioterapia em Neurologia</option>
+        </optgroup>
+        <optgroup label="5º Semestre">
+          <option>Cinesioterapia</option>
+          <option>Terapia Manual</option>
+          <option>Fundamentos de Fisioterapia Musculoesquelética</option>
+          <option>Fundamentos em Pneumologia</option>
+          <option>Fundamentos de Geriatria</option>
+          <option>Fundamentos de Pediatria e Neonatologia</option>
+        </optgroup>
+        <optgroup label="6º Semestre">
+          <option>Análises Clínicas, Laboratoriais e de Imagem</option>
+          <option>Fundamentos de Cardiologia</option>
+          <option>Fundamentos em Uroproctológicas, Ginecológicas e Obstetrícia</option>
+          <option>Fundamentos de Oncologia</option>
+          <option>Fisioterapia Aplicada às Disfunções Musculoesqueléticas</option>
+          <option>Fisioterapia Aplicada a Dermatofuncional e Disfunções Vasculares</option>
+          <option>Fisioterapia Aplicada As Disfunções Respiratórias - Ambulatorial</option>
+        </optgroup>
+        <optgroup label="7º Semestre">
+          <option>Fisioterapia Aplicada As Disfunções Uroproctológicas e Ginecológicas</option>
+          <option>Fisioterapia Aplicada à Obstetrícia</option>
+          <option>Fisioterapia Aplicada As Disfunções Neurológicas</option>
+          <option>Fisioterapia Aplicada À Oncologia</option>
+          <option>Fisioterapia Aplicada a Saúde do Trabalhador e Ergonomia</option>
+          <option>Fisioterapia Aplicada As Disfunções Respiratórias - Hospital</option>
+          <option>Próteses e Órteses Aplicadas à Fisioterapia</option>
+          <option>Estágio Supervisionado Preparatório Em Disfunções Musculoesqueléticas</option>
+          <option>Estágio Supervisionado Preparatório em Disfunções Obstétricas</option>
+        </optgroup>
+        <optgroup label="8º Semestre">
+          <option>Fisioterapia Aplicada As Disfunções Cardioangiológicas</option>
+          <option>Fisioterapia Aplicada as Disfunções Crânio-Mandibulares e Oculomotoras</option>
+          <option>Fisioterapia Aplicada ao Esporte</option>
+          <option>Fisioterapia Aplicada a Geriatria</option>
+          <option>Fisioterapia Aplicada a Pediatria e Fisioterapia Neonatal</option>
+          <option>Gestão, empreendedorismo</option>
+          <option>Psicologia Aplicada à Saúde - Fisioterapia</option>
+          <option>Projetos de Pesquisa e Estatística aplicada à saúde</option>
+          <option>Estágio Supervisionado Preparatório em Disfunções Neurológicas</option>
+          <option>Estágio Supervisionado Preparatório em Fisioterapia Hospitalar</option>
+        </optgroup>
+        <optgroup label="9º Semestre">
+          <option>Prática Sup. nas Disf. Musculoesqueléticas (Traumato + ortopedia + reumatologia + desportiva)</option>
+          <option>Prática Supervisionada Em Geriatria</option>
+          <option>Prática Supervisionada Em Saúde Pública</option>
+          <option>Prática Supervisionada Em Disfunções Cardio-Angiológicas</option>
+          <option>Prática Supervisionada Em Disfunções Respiratórias</option>
+          <option>Prática Supervisionada Em Hidroterapia (individual + grupo)</option>
+          <option>Prática Supervisionada Em Dermatofuncional E Disfunções Vasculares</option>
+        </optgroup>
+        <optgroup label="10º Semestre">
+          <option>Inovação em saúde</option>
+          <option>Prática Supervisionada Em Hospital Geral E UTI E Urgência e Emergência</option>
+          <option>Prática Super. Em Disfunções Uroproctológicas, ginecológicas E Obstétricas</option>
+          <option>Prática Supervisionada Em Oncologia</option>
+          <option>Pratica Supervisionada em Saúde do Trabalhador e Ergonomia</option>
+          <option>Prática Supervisionada nas Disfunções Crânio-mandibulares e Oculomotoras</option>
+          <option>Prática Supervisionada Em Disfunções Neurológicas</option>
+        </optgroup>
+      </select>
+      <div class="busca-box">
+        <input id="busca" type="text" placeholder="Buscar disciplina..." autocomplete="off">
+        <div id="matches" class="matches"></div>
+      </div>
+      <textarea id="pergunta" placeholder="Digite o enunciado da pergunta..." required></textarea>
+      <textarea id="resposta" placeholder="Digite a resposta..." required></textarea>
+      <div class="acoes">
+        <button type="submit" id="enviar">Enviar</button>
+        <button type="button" id="cancelar" class="secondary" hidden>Cancelar</button>
+      </div>
+      <p id="status"></p>
+    </form>
+  </section>
 
-<section>
-  <h2>Últimas Perguntas</h2>
-  <div id="lista"></div>
-</section>
+  <section>
+    <h2>Últimas Perguntas</h2>
+    <div class="busca-box" id="busca-lista">
+      <input id="busca-pergunta" type="text" placeholder="Buscar pergunta pelo enunciado..." autocomplete="off">
+    </div>
+    <div id="lista"></div>
+  </section>
+</div>
 
 <footer>
   <span>Tema: <span class="opt" data-tema="light">Claro</span> / <span class="opt" data-tema="dark">Escuro</span></span>
