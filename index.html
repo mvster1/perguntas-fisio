@@ -229,6 +229,13 @@
   .dif[data-nivel="Baixa"]{background:var(--baixa-bg);color:var(--baixa-fg);}
   .dif[data-nivel="Média"]{background:var(--media-bg);color:var(--media-fg);}
   .dif[data-nivel="Alta"]{background:var(--alta-bg);color:var(--alta-fg);}
+  .num{
+    color:var(--dim);
+    flex:none;
+    font-variant-numeric:tabular-nums;
+    /* o [+] e um ::before do summary, entao so a ordem do flex o ultrapassa */
+    order:-1;
+  }
   .editar, .excluir{color:var(--dim);flex:none;}
   /* encosta o excluir no editar, descontando parte do gap do summary */
   .editar + .excluir{margin-left:-2px;}

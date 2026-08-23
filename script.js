@@ -213,7 +213,7 @@ function confirmarExclusao(caixa, p) {
 
 async function excluirPergunta(caixa, p) {
   const tentativa = prompt(
-    `A pergunta #${p.id} será excluída definitivamente.\nDigite a senha para prosseguir:`
+    `A pergunta #${p.id} será excluída definitivamente e esta ação não é reversível.\n\nDigite a senha para prosseguir, ou cancele:`
   );
 
   if (tentativa === null) {
@@ -277,6 +277,10 @@ function criarItem(p) {
   const item = document.createElement("details");
   const summary = document.createElement("summary");
 
+  const numero = document.createElement("span");
+  numero.className = "num";
+  numero.textContent = "#" + p.id;
+
   const editar = acaoDoResumo("Editar", "editar", () => iniciarEdicao(p));
 
   const excluir = document.createElement("span");
@@ -294,6 +298,7 @@ function criarItem(p) {
     timeStyle: "short",
   });
 
+  summary.appendChild(numero);
   summary.appendChild(editar);
   summary.appendChild(excluir);
   summary.appendChild(titulo);
@@ -429,7 +434,7 @@ addEventListener("resize", ajustarPorPagina);
 if (document.fonts) document.fonts.ready.then(ajustarPorPagina);
 
 async function autenticar() {
-  let aviso = "Senha:";
+  let aviso = "Insira a senha:";
 
   for (;;) {
     const tentativa = prompt(aviso);
