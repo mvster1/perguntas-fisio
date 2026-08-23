@@ -9,227 +9,136 @@ acesso: <https://mvster1.github.io/perguntas-fisio/>
 
 ### uso
 
-a versão publicada fica em <https://mvster1.github.io/perguntas-fisio/>, servida
-pelo github pages a partir deste repositório. como o `config.js` é versionado e
-não existe etapa de build, um `git push` na branch `main` já atualiza o site.
+a versão publicada é servida pelo github pages a partir deste repositório. como
+o `config.js` é versionado e não existe etapa de build, um `git push` na `main`
+já atualiza o site. ao abrir, a página pede a senha; a mesma vale para enviar,
+editar e excluir.
 
-ao abrir, a página pede a senha antes de mostrar qualquer coisa. a mesma senha
-vale para enviar, editar e excluir.
-
-para rodar localmente, clone o repositório e instale as dependências de
-desenvolvimento:
+para rodar localmente:
 
 ```
 git clone https://github.com/mvster1/perguntas-fisio.git
 cd perguntas-fisio
 npm install
-cp .env.example .env
+cp .env.example .env      # preencha com a url e a chave publicável
+npm run config            # gera o config.js
+python -m http.server 8000
 ```
 
-preencha o `.env` com a url do projeto e a chave publicável e gere o `config.js`:
-
-```
-npm run config
-```
-
-aplique as migrações no projeto do supabase:
+para levantar um banco do zero, aplique as migrações e cadastre a senha:
 
 ```
 npx supabase link --project-ref SEU_REF
 npx supabase db push
 ```
 
-cadastre a senha no vault, pelo painel do supabase ou por sql:
-
 ```sql
 select vault.create_secret('sua-senha', 'senha_formulario');
 ```
-
-por fim, sirva o diretório com qualquer servidor estático:
-
-```
-python -m http.server 8000
-```
-
-e acesse <http://localhost:8000>. abrir o `index.html` direto pelo sistema de
-arquivos também funciona, já que não há build nem módulos; apenas o
-`localStorage` do tema se comporta de forma diferente sob `file://`.
 
 ### detalhamento técnico
 
 #### arquitetura
 
-o site inteiro são três arquivos: `index.html`, com marcação, estilo e a lista
-fixa de disciplinas; `script.js`, com toda a lógica; e `config.js`, gerado a
-partir do `.env` por `generate-config.js`. nenhuma biblioteca é carregada no
-navegador: o `fetch` conversa direto com a api rest do supabase, e o css mora
-no `<style>` do próprio html.
+três arquivos: `index.html`, com marcação, estilo e a lista fixa de disciplinas;
+`script.js`, com toda a lógica; e `config.js`, gerado a partir do `.env`. nenhuma
+biblioteca é carregada no navegador, o `fetch` conversa direto com a api rest do
+supabase e o css mora no `<style>` do próprio html.
 
-toda a autorização vive no banco. o cliente apenas repassa a senha digitada.
+toda a autorização vive no banco; o cliente apenas repassa a senha digitada.
 
 #### banco
 
 tabela única, `perguntas`:
 
-| coluna | tipo | observação |
+| coluna | tipo | conteúdo |
 | --- | --- | --- |
 | `id` | `bigint` | identidade, chave primária |
-| `pergunta` | `text` | enunciado; obrigatório |
-| `resposta` | `text` | texto da alternativa marcada como correta |
+| `pergunta` | `text` | enunciado |
 | `alt_a` a `alt_d` | `text` | as quatro alternativas |
-| `disciplina` | `text` | nome exatamente como aparece na picklist |
+| `correta` | `text` | letra da certa; `check` limita a `a`, `b`, `c` ou `d` |
+| `resposta` | `text` | texto da alternativa correta, copiado no envio |
+| `disciplina` | `text` | exatamente como aparece na picklist |
 | `dificuldade` | `text` | `Baixa`, `Média` ou `Alta` |
-| `dica_bonus` | `text` | obrigatória; `not null` e `check` de texto não vazio |
-| `correta` | `text` | letra da alternativa correta: `a`, `b`, `c` ou `d` |
+| `dica_bonus` | `text` | `check` recusa texto vazio |
 | `created_at` | `timestamptz` | `default now()` |
 
-a tabela tem row level security ativa e nenhuma política de leitura, de modo que
-o papel `anon` só alcança as linhas através das funções abaixo. todas são
-`security definer`, recebem a senha como argumento e têm execução concedida ao
-papel `anon`:
+**todas as colunas são `not null`**: uma pergunta incompleta não serve ao jogo,
+que precisa das alternativas, da correta, da dificuldade e da dica para montar
+uma rodada. a regra vive no banco, não só no formulário.
 
-- `checar_senha(p_senha)`: lê o segredo do vault e levanta exceção se não bater.
-- `enviar_pergunta(p_pergunta, p_senha, p_disciplina, p_resposta, p_alt_a, p_alt_b, p_alt_c, p_alt_d, p_dificuldade, p_dica_bonus, p_correta)`:
-  insere.
-- `atualizar_pergunta(p_id, ...)`: mesma lista de campos, precedida do `id`;
-  sobrescreve a linha indicada e levanta exceção se o `id` não existir.
-- `excluir_pergunta(p_id, p_senha)`: apaga a linha indicada; levanta exceção se
-  o `id` não existir.
-- `listar_perguntas(p_senha)`: devolve todas as perguntas, ordenadas por `id`
-  decrescente.
+a tabela tem row level security ativa e nenhuma política, de modo que o papel
+`anon` não lê nem grava diretamente: o único caminho são estas funções, todas
+`security definer` e com execução concedida a `anon`:
+
+- `checar_senha(p_senha)`: compara com o segredo do vault e levanta exceção se
+  não bater.
+- `enviar_pergunta(...)`: insere, recebendo todos os campos mais a senha.
+- `atualizar_pergunta(p_id, ...)`: mesma lista, precedida do `id`.
+- `excluir_pergunta(p_id, p_senha)`: apaga a linha.
+- `listar_perguntas(p_senha)`: devolve tudo, por `id` decrescente.
 
 a senha correta nunca chega ao cliente: fica no supabase vault, sob o nome
 `senha_formulario`, e a comparação acontece dentro do banco.
 
-#### migrações
-
-os arquivos de `supabase/migrations/` são cumulativos e devem ser aplicados em
-ordem. as colunas `disciplina`, `resposta`, `alt_a` a `alt_d`, `dificuldade` e
-`dica_bonus` foram acrescentadas depois da criação da tabela, e algumas delas
-nasceram no painel do supabase; por isso as migrações correspondentes usam
-`add column if not exists`, que as torna inócuas no banco atual e completas em
-um banco novo.
-
-cada mudança na lista de campos derruba a versão anterior de `enviar_pergunta` e
-de `atualizar_pergunta` antes de recriá-las. sem esse `drop`, as assinaturas
-antigas continuariam existindo e o postgrest teria sobrecargas ambíguas para
-resolver.
-
-#### autenticação
-
-antes de qualquer coisa aparecer, o script chama o `prompt()` nativo do
-navegador e pede a senha. a resposta é enviada à função `listar_perguntas`; se o
-banco aceitar, o conteúdo é revelado e a senha fica em memória para as chamadas
-seguintes. se recusar, o `prompt()` reaparece; se for cancelado, a página
-permanece vazia.
-
-a exclusão pede a senha outra vez, no mesmo `prompt()` nativo, por ser a única
-ação destrutiva.
-
-#### layout
-
-autenticado, o conteúdo se divide em duas colunas, formulário à esquerda e lista
-à direita, que colapsam em uma só abaixo de 900px. as colunas são
-`minmax(0,1fr)` em vez de `1fr`, porque as opções longas do `<select>` esticariam
-uma coluna de largura automática e empurrariam a lista para fora da tela.
+as migrações em `supabase/migrations/` são cumulativas e precisam ser aplicadas
+em ordem. várias colunas nasceram no painel do supabase e só depois foram
+declaradas, por isso usam `add column if not exists`. cada mudança na lista de
+campos derruba a versão anterior de `enviar_pergunta` e `atualizar_pergunta`
+antes de recriá-las, senão o postgrest ficaria com sobrecargas ambíguas.
 
 #### formulário
 
-os campos são preenchidos nesta ordem: enunciado, disciplina, as quatro
-alternativas, a dificuldade e a dica bônus. todos são obrigatórios; faltando
-algum, o envio para e o motivo aparece na linha de status.
+a página só aparece depois que a senha digitada no `prompt()` nativo é aceita
+por `listar_perguntas`; a senha fica em memória para as chamadas seguintes. a
+exclusão pede a senha de novo, por ser a única ação destrutiva.
 
-a disciplina vem de um `<select>` com as 67 unidades curriculares de ensino do
-curso, agrupadas por semestre em `<optgroup>`; as unidades de extensão ficaram de
-fora. a lista é fixa no html, e o banco guarda apenas a string escolhida: não há
-tabela de domínio nem constraint que valide o valor.
+os campos são enunciado, disciplina, as quatro alternativas com a marcação da
+correta, a dificuldade e a dica bônus. faltando qualquer um, o envio para e o
+motivo aparece no status.
 
-logo abaixo há uma busca que filtra as opções conforme se digita, ignorando
-acentos e caixa. a normalização aplica `NFD` e descarta os diacríticos, de modo
-que `musculoesquel` encontra "Musculoesquelética". clicar em um resultado, ou
-teclar enter, seleciona a opção no `<select>` acima. o enter também precisa de
-`preventDefault`, senão submeteria o formulário no meio da busca.
+a disciplina vem de um `<select>` com as 67 unidades curriculares do curso,
+agrupadas por semestre; as unidades de extensão ficaram de fora. abaixo dele há
+uma busca que filtra as opções ignorando acentos e caixa, de modo que
+`musculoesquel` encontra "Musculoesquelética". a lista é fixa no html e o banco
+guarda só a string escolhida, sem constraint que a valide.
 
-as quatro alternativas têm cada uma sua caixa e sua marcação. marcar uma
-desmarca as demais, de modo que a marcação funciona como escolha única mesmo
-sendo `checkbox`. no envio, a letra da marcada vai para a coluna `correta` e o
-texto dela é copiado para `resposta`. guardar a letra é o que permite destacar a
-alternativa certa mesmo quando duas delas têm exatamente o mesmo texto.
-
-a dificuldade é uma faixa de três opções, `Baixa`, `Média` e `Alta`, neutra até
-receber o clique; a escolhida ganha o fundo pastel correspondente.
-
-a dica bônus é obrigatória porque o jogo exibe a dica da pergunta seguinte a
-cada três acertos, e qualquer pergunta pode cair nessa posição. a regra também
-vale no banco: a coluna é `not null` e tem uma constraint que recusa texto
-vazio, de modo que uma chamada direta à api não consegue driblar o formulário.
+marcar uma alternativa desmarca as outras. no envio, a letra vai para `correta`
+e o texto para `resposta`; é a letra que permite destacar a certa mesmo quando
+duas alternativas têm o mesmo texto.
 
 #### listagem
 
-as perguntas chegam ordenadas por `id` decrescente e são agrupadas por
-disciplina em `<details>` aninhados: o grupo externo traz o nome da disciplina e
-a contagem, e cada item interno traz o enunciado truncado, o selo de dificuldade
-e o horário, revelando enunciado, alternativas e ações ao expandir. a alternativa
-correta aparece destacada com um `✓`; registros anteriores às alternativas
-mostram apenas a linha `resposta`. quando existe dica bônus, ela fecha o bloco.
+as perguntas são agrupadas por disciplina em `<details>` aninhados: o grupo traz
+o nome e a contagem, e cada item traz o enunciado truncado, o selo de
+dificuldade e o horário, revelando alternativas, dica e ações ao expandir.
 
-como o `map` preserva a ordem de inserção, as disciplinas aparecem na ordem da
-pergunta mais recente de cada uma.
+a busca acima da lista não abre menu de resultados: redesenha a lista com o que
+casa com o termo, deixando visíveis apenas as disciplinas com resultado, já
+expandidas.
 
-a busca acima da lista não abre um menu de resultados: ela redesenha a lista com
-as perguntas que casam com o termo, mantendo visíveis apenas as disciplinas com
-resultado e já expandindo cada uma.
+a lista mostra só as disciplinas que cabem até a linha do botão enviar, e o
+resto fica em páginas. a quantidade por página é medida a partir da altura real
+do formulário, e recalculada no `resize` e quando a fonte termina de carregar.
 
-#### paginação
-
-a lista mostra apenas as disciplinas que cabem até a linha do botão enviar, e o
-restante fica em páginas, com `[< anterior] x / y [próxima >]` no rodapé.
-
-a quantidade por página é medida, não fixa: `medirPorPagina()` calcula o espaço
-entre o topo da lista e a base do formulário, desconta o rodapé e divide pela
-altura de uma linha. a altura de linha vem do `<summary>` e não do `<details>`,
-porque durante a busca os grupos ficam abertos e a altura do `<details>` deixaria
-de representar uma linha. a medição se repete no `resize` e quando
-`document.fonts.ready` resolve, já que a inter chega depois do primeiro desenho e
-muda a altura da linha.
-
-a paginação volta à primeira página ao enviar, editar ou excluir uma pergunta e
-a cada digitação na busca.
-
-#### edição e exclusão
-
-o `editar` de cada pergunta carrega os valores daquela linha no formulário da
-esquerda, incluindo alternativas e dificuldade, troca o botão para `salvar` e
-revela o `cancelar`. salvar chama `atualizar_pergunta` em vez de
-`enviar_pergunta`. a página rola para o topo e o foco usa `preventScroll`, senão
-o próprio foco arrastaria a rolagem e cancelaria o movimento.
-
-o `excluir` se transforma em `sim / não` no próprio lugar; o `sim` abre o
-`prompt()` de senha. cancelar, recusar ou errar a senha devolve o rótulo ao
-estado inicial.
-
-os cliques dessas ações interrompem a propagação, senão também abririam o
-`<details>` que as contém.
+o `editar` carrega a pergunta no formulário da esquerda e troca o botão para
+`salvar`; o `excluir` vira `sim / não` no próprio lugar antes de pedir a senha.
 
 #### tema
 
-um script inline no `<head>` define `data-theme` no elemento raiz antes da
-primeira pintura, lendo o `localStorage` e caindo em `prefers-color-scheme` na
-primeira visita; sem isso a página piscaria clara antes de aplicar o tema
-escuro. as cores são variáveis css redefinidas em `:root[data-theme="dark"]`, e o
-seletor no rodapé grava a escolha. enquanto não houver escolha manual, a página
-acompanha em tempo real a troca de tema do sistema.
+um script inline no `<head>` define `data-theme` antes da primeira pintura,
+lendo o `localStorage` e caindo em `prefers-color-scheme` na primeira visita,
+para a página não piscar clara antes de aplicar o tema escuro. as cores são
+variáveis css redefinidas em `:root[data-theme="dark"]`. enquanto não houver
+escolha manual no rodapé, a página acompanha o tema do sistema em tempo real.
 
 #### ressalvas conhecidas
 
-- a chave publicável e a url não são segredos: estão visíveis no `config.js`
-  entregue ao navegador, e a proteção real vem da row level security.
-- a senha trafega em texto claro no corpo da requisição, portanto a página
-  precisa ser servida sobre https; o github pages já atende a isso.
-- a política `Allow public insert`, criada na primeira migração, ainda permite
-  inserção direta na tabela sem senha. remova-a se quiser que todo caminho de
-  escrita passe por `enviar_pergunta`.
-- a listagem não é paginada no banco: `listar_perguntas` devolve a tabela
-  inteira, e tanto a busca quanto a paginação operam no navegador.
+- a chave publicável e a url no `config.js` não são segredos: vão para o
+  navegador de qualquer visitante, e a proteção real vem da row level security.
+- a senha trafega em texto claro no corpo da requisição, então a página precisa
+  ser servida sobre https; o github pages atende a isso.
+- `listar_perguntas` devolve a tabela inteira: busca e paginação acontecem no
+  navegador, sem paginação no banco.
 - editar uma pergunta cuja disciplina saiu da picklist deixa o `<select>` vazio,
   e o campo é obrigatório: será preciso escolher outra para salvar.
