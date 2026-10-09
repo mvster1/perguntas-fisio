@@ -528,7 +528,11 @@ form.addEventListener("submit", async (e) => {
         ...textos,
       });
     }
+    // o form.reset() limparia a uce, mas quem envia várias seguidas costuma
+    // continuar na mesma
+    const uceEscolhida = uce.value;
     sairDaEdicao();
+    uce.value = uceEscolhida;
     mostrarStatus(editando ? "Pergunta atualizada." : "Pergunta enviada.", "ok");
     renderLista(await rpc("listar_perguntas", { p_senha: senha }));
   } catch (err) {
