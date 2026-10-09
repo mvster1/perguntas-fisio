@@ -7,7 +7,7 @@ const form = document.getElementById("form");
 const textarea = document.getElementById("pergunta");
 const disciplina = document.getElementById("disciplina");
 const uce = document.getElementById("uce");
-const alternativas = ["a", "b", "c", "d"].map((letra) => ({
+const alternativas = ["a", "b", "c", "d", "e"].map((letra) => ({
   letra,
   campo: document.getElementById(`alt-${letra}`),
   marca: document.querySelector(`.correta[data-alt="${letra}"]`),
@@ -306,7 +306,7 @@ function criarItem(p) {
   item.appendChild(uceLinha);
   item.appendChild(texto);
 
-  const letras = ["a", "b", "c", "d"];
+  const letras = ["a", "b", "c", "d", "e"];
   const temAlternativas = letras.some((letra) => p[`alt_${letra}`]);
 
   if (temAlternativas) {
@@ -484,7 +484,7 @@ form.addEventListener("submit", async (e) => {
 
   if (!uce.value || !pergunta || !disciplina.value) return;
   if (alternativas.some((alt) => !alt.campo.value.trim())) {
-    mostrarStatus("Preencha as quatro alternativas.", "err");
+    mostrarStatus("Preencha as cinco alternativas.", "err");
     return;
   }
   if (!correta) {

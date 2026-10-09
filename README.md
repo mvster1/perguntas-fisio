@@ -55,8 +55,8 @@ tabela única, `perguntas`:
 | --- | --- | --- |
 | `id` | `bigint` | identidade, chave primária |
 | `pergunta` | `text` | enunciado |
-| `alt_a` a `alt_d` | `text` | as quatro alternativas |
-| `correta` | `text` | letra da certa; `check` limita a `a`, `b`, `c` ou `d` |
+| `alt_a` a `alt_e` | `text` | as cinco alternativas; `alt_e` é nula só nas perguntas antigas |
+| `correta` | `text` | letra da certa; `check` limita a `a`, `b`, `c`, `d` ou `e` |
 | `resposta` | `text` | texto da alternativa correta, copiado no envio |
 | `disciplina` | `text` | exatamente como aparece na picklist |
 | `dificuldade` | `text` | sempre `Média` nas novas (é também o default); antigas guardam `Baixa`, `Média` ou `Alta` |
@@ -64,7 +64,7 @@ tabela única, `perguntas`:
 | `dica_bonus` | `text` | `check` recusa texto vazio |
 | `created_at` | `timestamptz` | `default now()` |
 
-**todas as colunas, exceto `uce_id`, são `not null`**: uma pergunta
+**todas as colunas, exceto `uce_id` e `alt_e`, são `not null`**: uma pergunta
 incompleta não serve ao jogo, que precisa das alternativas, da correta e da dica
 para montar uma rodada. a regra vive no banco, não só no formulário. a
 dificuldade saiu do formulário e o cliente passa sempre `Média`.
@@ -100,7 +100,7 @@ a página só aparece depois que a senha digitada no `prompt()` nativo é aceita
 por `listar_perguntas`; a senha fica em memória para as chamadas seguintes. a
 exclusão pede a senha de novo, por ser a única ação destrutiva.
 
-os campos são uce, enunciado, disciplina, as quatro alternativas com a marcação da
+os campos são uce, enunciado, disciplina, as cinco alternativas com a marcação da
 correta e a dica bônus. faltando qualquer um, o envio para e o
 motivo aparece no status.
 
