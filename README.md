@@ -59,15 +59,15 @@ tabela única, `perguntas`:
 | `correta` | `text` | letra da certa; `check` limita a `a`, `b`, `c` ou `d` |
 | `resposta` | `text` | texto da alternativa correta, copiado no envio |
 | `disciplina` | `text` | exatamente como aparece na picklist |
-| `dificuldade` | `text` | sempre `null` nas novas; antigas guardam `Baixa`, `Média` ou `Alta` |
+| `dificuldade` | `text` | sempre `Média` nas novas (é também o default); antigas guardam `Baixa`, `Média` ou `Alta` |
 | `uce_id` | `smallint` | chave estrangeira para `uces`; nula só nas perguntas antigas |
 | `dica_bonus` | `text` | `check` recusa texto vazio |
 | `created_at` | `timestamptz` | `default now()` |
 
-**todas as colunas, exceto `dificuldade` e `uce_id`, são `not null`**: uma pergunta
+**todas as colunas, exceto `uce_id`, são `not null`**: uma pergunta
 incompleta não serve ao jogo, que precisa das alternativas, da correta e da dica
 para montar uma rodada. a regra vive no banco, não só no formulário. a
-dificuldade saiu do formulário e o cliente passa sempre `null`.
+dificuldade saiu do formulário e o cliente passa sempre `Média`.
 
 a uce mora numa segunda tabela, `uces`, com `id` (`smallint`, `check` de 1 a 8)
 e `nome` (`UCE 1` a `UCE 8`), já preenchida pela migração. `perguntas.uce_id`
