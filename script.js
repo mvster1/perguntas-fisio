@@ -297,7 +297,13 @@ function criarItem(p) {
   texto.className = "q";
   texto.textContent = p.pergunta;
 
+  // perguntas anteriores à uce obrigatória não têm uce_id
+  const uceLinha = document.createElement("p");
+  uceLinha.className = "uce";
+  uceLinha.textContent = p.uce_id ? `UCE ${p.uce_id}` : "Sem UCE";
+
   item.appendChild(summary);
+  item.appendChild(uceLinha);
   item.appendChild(texto);
 
   const letras = ["a", "b", "c", "d"];
