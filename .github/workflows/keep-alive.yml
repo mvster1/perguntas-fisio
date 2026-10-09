@@ -1,0 +1,36 @@
+# Mantém o projeto do Supabase acordado.
+#
+# O plano gratuito pausa o projeto depois de cerca de 7 dias sem requisições.
+# Qualquer requisição reinicia essa contagem, então uma chamada a cada 3 dias
+# mantém a margem confortável mesmo que uma execução falhe ou atrase.
+#
+# A chave usada aqui é a publicável, a mesma que já vai no config.js para o
+# navegador de qualquer visitante: não é segredo.
+
+name: keep-alive
+
+on:
+  schedule:
+    - cron: "0 12 */3 * *"   # 12:00 UTC, a cada 3 dias
+  workflow_dispatch:          # permite rodar na mão pelo site do GitHub
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: chama a função ping no banco
+        run: |
+          resposta=$(curl -sS --fail-with-body \
+            -X POST "https://kfzltqcbnzqshdanwlvk.supabase.co/rest/v1/rpc/ping" \
+            -H "apikey: sb_publishable_2JU3JqahCnSeerSiNpslNw_qLVG8gjr" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+
+          echo "resposta: $resposta"
+
+          # o curl acima já falha em erro de HTTP; isto pega o caso de o projeto
+          # responder 200 com algo inesperado, como uma página de manutenção
+          if [ "$resposta" != '"ok"' ]; then
+            echo "resposta inesperada do projeto" >&2
+            exit 1
+          fi

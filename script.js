@@ -6,6 +6,7 @@ const main = document.getElementById("main");
 const form = document.getElementById("form");
 const textarea = document.getElementById("pergunta");
 const disciplina = document.getElementById("disciplina");
+const uce = document.getElementById("uce");
 const alternativas = ["a", "b", "c", "d"].map((letra) => ({
   letra,
   campo: document.getElementById(`alt-${letra}`),
@@ -16,7 +17,6 @@ const matches = document.getElementById("matches");
 const cancelar = document.getElementById("cancelar");
 const buscaPergunta = document.getElementById("busca-pergunta");
 const dica = document.getElementById("dica");
-const niveis = [...document.querySelectorAll("#dificuldade .nivel")];
 const paginacao = document.getElementById("paginacao");
 const paginaAnterior = document.getElementById("pagina-anterior");
 const paginaProxima = document.getElementById("pagina-proxima");
@@ -31,7 +31,6 @@ let editandoId = null;
 let perguntasAtuais = [];
 let paginaAtual = 1;
 let porPagina = 12;
-let dificuldade = null;
 let timerStatus = null;
 
 function mostrarStatus(texto, classe = "") {
@@ -148,17 +147,6 @@ for (const alt of alternativas) {
       if (outra !== alt) outra.marca.checked = false;
     }
   });
-}
-
-function marcarDificuldade(valor) {
-  dificuldade = valor;
-  for (const nivel of niveis) {
-    nivel.classList.toggle("ativo", nivel.dataset.nivel === valor);
-  }
-}
-
-for (const nivel of niveis) {
-  nivel.addEventListener("click", () => marcarDificuldade(nivel.dataset.nivel));
 }
 
 function alternativaCorreta() {
@@ -302,14 +290,6 @@ function criarItem(p) {
   summary.appendChild(editar);
   summary.appendChild(excluir);
   summary.appendChild(titulo);
-
-  if (p.dificuldade) {
-    const dif = document.createElement("span");
-    dif.className = "dif";
-    dif.dataset.nivel = p.dificuldade;
-    dif.textContent = p.dificuldade;
-    summary.appendChild(dif);
-  }
 
   summary.appendChild(time);
 
@@ -457,6 +437,7 @@ async function autenticar() {
 
 function iniciarEdicao(p) {
   editandoId = p.id;
+  uce.value = p.uce_id || "";
   disciplina.value = p.disciplina || "";
   textarea.value = p.pergunta;
 
@@ -464,7 +445,6 @@ function iniciarEdicao(p) {
     alt.campo.value = p[`alt_${alt.letra}`] || "";
     alt.marca.checked = alt.letra === p.correta;
   }
-  marcarDificuldade(p.dificuldade || null);
   dica.value = p.dica_bonus || "";
   busca.value = "";
   matches.textContent = "";
@@ -481,7 +461,6 @@ function sairDaEdicao() {
   editandoId = null;
   form.reset();
   limparAlternativas();
-  marcarDificuldade(null);
   matches.textContent = "";
   enviar.textContent = "Enviar";
   cancelar.hidden = true;
@@ -497,17 +476,13 @@ form.addEventListener("submit", async (e) => {
   const pergunta = textarea.value.trim();
   const correta = alternativaCorreta();
 
-  if (!pergunta || !disciplina.value) return;
+  if (!uce.value || !pergunta || !disciplina.value) return;
   if (alternativas.some((alt) => !alt.campo.value.trim())) {
     mostrarStatus("Preencha as quatro alternativas.", "err");
     return;
   }
   if (!correta) {
     mostrarStatus("Marque qual alternativa é a correta.", "err");
-    return;
-  }
-  if (!dificuldade) {
-    mostrarStatus("Escolha a dificuldade.", "err");
     return;
   }
   if (!dica.value.trim()) {
@@ -534,7 +509,8 @@ form.addEventListener("submit", async (e) => {
         p_senha: senha,
         p_disciplina: disciplina.value,
         p_resposta: resposta,
-        p_dificuldade: dificuldade,
+        p_dificuldade: null,
+        p_uce_id: Number(uce.value),
         p_dica_bonus: dica.value.trim(),
         p_correta: correta.letra,
         ...textos,
@@ -545,7 +521,8 @@ form.addEventListener("submit", async (e) => {
         p_senha: senha,
         p_disciplina: disciplina.value,
         p_resposta: resposta,
-        p_dificuldade: dificuldade,
+        p_dificuldade: null,
+        p_uce_id: Number(uce.value),
         p_dica_bonus: dica.value.trim(),
         p_correta: correta.letra,
         ...textos,

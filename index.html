@@ -23,12 +23,6 @@
     --field:#fff;
     --btn-fg:#fff;
     --err:#b3392f;
-    --baixa-bg:#dde5d4;
-    --baixa-fg:#47593a;
-    --media-bg:#f0e4c3;
-    --media-fg:#6d5a22;
-    --alta-bg:#eed8d1;
-    --alta-fg:#7b3b2f;
     color-scheme:light;
   }
   :root[data-theme="dark"]{
@@ -41,12 +35,6 @@
     --field:#232323;
     --btn-fg:#1a1a1a;
     --err:#e0685a;
-    --baixa-bg:#2c3a2b;
-    --baixa-fg:#a9c59c;
-    --media-bg:#3d3524;
-    --media-fg:#d7be7f;
-    --alta-bg:#3d2a25;
-    --alta-fg:#e0a195;
     color-scheme:dark;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -107,30 +95,6 @@
   #form{display:flex;flex-direction:column;align-items:stretch;gap:12px;}
   .acoes{display:flex;gap:8px;align-self:flex-start;}
   .orientacao{color:var(--dim);font-size:12px;}
-  #dificuldade{
-    display:flex;
-    width:100%;
-    border:1px solid var(--border);
-    background:var(--field);
-    overflow:hidden;
-  }
-  #dificuldade .nivel{
-    flex:1;
-    padding:8px 10px;
-    text-align:center;
-    font-size:14px;
-    color:var(--dim);
-    cursor:pointer;
-    border-right:1px solid var(--border);
-    user-select:none;
-  }
-  #dificuldade .nivel:last-child{border-right:none;}
-  #dificuldade .nivel:hover{color:var(--fg);}
-  /* a cor pastel aparece só no nível escolhido */
-  #dificuldade .nivel.ativo{font-weight:600;}
-  #dificuldade .nivel.ativo[data-nivel="Baixa"]{background:var(--baixa-bg);color:var(--baixa-fg);}
-  #dificuldade .nivel.ativo[data-nivel="Média"]{background:var(--media-bg);color:var(--media-fg);}
-  #dificuldade .nivel.ativo[data-nivel="Alta"]{background:var(--alta-bg);color:var(--alta-fg);}
   #alternativas{display:flex;flex-direction:column;gap:8px;}
   .alternativa{display:flex;align-items:flex-start;gap:8px;}
   .alternativa textarea{min-height:52px;}
@@ -220,15 +184,6 @@
   details summary .titulo{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   details > summary::before{content:"[+]";color:var(--dim);}
   details[open] > summary::before{content:"[-]";color:var(--dim);}
-  .dif{
-    flex:none;
-    font-size:10px;
-    padding:1px 6px;
-    white-space:nowrap;
-  }
-  .dif[data-nivel="Baixa"]{background:var(--baixa-bg);color:var(--baixa-fg);}
-  .dif[data-nivel="Média"]{background:var(--media-bg);color:var(--media-fg);}
-  .dif[data-nivel="Alta"]{background:var(--alta-bg);color:var(--alta-fg);}
   .num{
     color:var(--dim);
     flex:none;
@@ -319,6 +274,18 @@
   <section>
     <h2>Nova pergunta</h2>
     <form id="form">
+      <p class="orientacao">Selecione a UCE da pergunta</p>
+      <select id="uce" required>
+        <option value="" disabled selected>Selecione a UCE...</option>
+        <option value="1">UCE 1</option>
+        <option value="2">UCE 2</option>
+        <option value="3">UCE 3</option>
+        <option value="4">UCE 4</option>
+        <option value="5">UCE 5</option>
+        <option value="6">UCE 6</option>
+        <option value="7">UCE 7</option>
+        <option value="8">UCE 8</option>
+      </select>
       <p class="orientacao">Escreva o enunciado e selecione a disciplina correspondente</p>
       <textarea id="pergunta" placeholder="Digite o enunciado da pergunta..." required></textarea>
       <select id="disciplina" required>
@@ -445,12 +412,6 @@
           </label>
           <textarea id="alt-d" placeholder="Alternativa d..." required></textarea>
         </div>
-      </div>
-      <p class="orientacao">Escolha o nível de dificuldade da pergunta</p>
-      <div id="dificuldade">
-        <span class="nivel" data-nivel="Baixa">Baixa</span>
-        <span class="nivel" data-nivel="Média">Média</span>
-        <span class="nivel" data-nivel="Alta">Alta</span>
       </div>
       <p class="orientacao">Escreva a dica bônus da pergunta</p>
       <textarea id="dica" placeholder="Dica bônus..." required></textarea>

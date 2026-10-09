@@ -59,15 +59,22 @@ tabela única, `perguntas`:
 | `correta` | `text` | letra da certa; `check` limita a `a`, `b`, `c` ou `d` |
 | `resposta` | `text` | texto da alternativa correta, copiado no envio |
 | `disciplina` | `text` | exatamente como aparece na picklist |
-| `dificuldade` | `text` | `Baixa`, `Média` ou `Alta` |
+| `dificuldade` | `text` | sempre `null` nas novas; antigas guardam `Baixa`, `Média` ou `Alta` |
+| `uce_id` | `smallint` | chave estrangeira para `uces`; nula só nas perguntas antigas |
 | `dica_bonus` | `text` | `check` recusa texto vazio |
 | `created_at` | `timestamptz` | `default now()` |
 
-**todas as colunas são `not null`**: uma pergunta incompleta não serve ao jogo,
-que precisa das alternativas, da correta, da dificuldade e da dica para montar
-uma rodada. a regra vive no banco, não só no formulário.
+**todas as colunas, exceto `dificuldade` e `uce_id`, são `not null`**: uma pergunta
+incompleta não serve ao jogo, que precisa das alternativas, da correta e da dica
+para montar uma rodada. a regra vive no banco, não só no formulário. a
+dificuldade saiu do formulário e o cliente passa sempre `null`.
 
-a tabela tem row level security ativa e nenhuma política, de modo que o papel
+a uce mora numa segunda tabela, `uces`, com `id` (`smallint`, `check` de 1 a 8)
+e `nome` (`UCE 1` a `UCE 8`), já preenchida pela migração. `perguntas.uce_id`
+aponta para ela; a coluna aceita null só porque as perguntas anteriores não têm
+uce, e as funções de envio e edição recusam envio sem ela.
+
+as duas tabelas têm row level security ativa e nenhuma política, de modo que o papel
 `anon` não lê nem grava diretamente: o único caminho são estas funções, todas
 `security definer` e com execução concedida a `anon`:
 
@@ -93,8 +100,8 @@ a página só aparece depois que a senha digitada no `prompt()` nativo é aceita
 por `listar_perguntas`; a senha fica em memória para as chamadas seguintes. a
 exclusão pede a senha de novo, por ser a única ação destrutiva.
 
-os campos são enunciado, disciplina, as quatro alternativas com a marcação da
-correta, a dificuldade e a dica bônus. faltando qualquer um, o envio para e o
+os campos são uce, enunciado, disciplina, as quatro alternativas com a marcação da
+correta e a dica bônus. faltando qualquer um, o envio para e o
 motivo aparece no status.
 
 a disciplina vem de um `<select>` com as 67 unidades curriculares do curso,
@@ -110,8 +117,7 @@ duas alternativas têm o mesmo texto.
 #### listagem
 
 as perguntas são agrupadas por disciplina em `<details>` aninhados: o grupo traz
-o nome e a contagem, e cada item traz o enunciado truncado, o selo de
-dificuldade e o horário, revelando alternativas, dica e ações ao expandir.
+o nome e a contagem, e cada item traz o enunciado truncado e o horário, revelando alternativas, dica e ações ao expandir.
 
 a busca acima da lista não abre menu de resultados: redesenha a lista com o que
 casa com o termo, deixando visíveis apenas as disciplinas com resultado, já
